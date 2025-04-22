@@ -48,30 +48,30 @@ edge_index  = edge_index.to(DEVICE)
 edge_weight = edge_weight.to(DEVICE)
 
 
-NUM_NODES    = len(all_zips)   # number of unique counties
-FEAT_DIM     = 15     # your features per node (weather + outage, etc)
-EMBED_DIM    = 64     # hidden dimension for GCN
-LSTM_HID     = 128    # hidden dimension for LSTM
-
-
 #  Model Definition
 class SpatioTemporalOutageModel(nn.Module):
-    def __init__(self):
+    def __init__(self,
+                 edge_index,
+                 edge_weight=None,
+                 feat_dim: int = 14,
+                 embed_dim: int = 64,
+                 lstm_hid: int  = 128,
+                 num_nodes: int = 3233):
         super().__init__()
-        # 1) shared spatial encoder (2‐layer GCN)
-        self.gcn1 = GCNConv(FEAT_DIM, EMBED_DIM)
-        self.gcn2 = GCNConv(EMBED_DIM, EMBED_DIM)
-        # 2) per‐county bias embeddings
-        self.county_bias = nn.Embedding(NUM_NODES, EMBED_DIM)
-        # 3) temporal decoder
-        self.lstm = nn.LSTM(input_size=EMBED_DIM,
-                            hidden_size=LSTM_HID,
-                            batch_first=True)
-        # 4) final MLP head
-        self.mlp = nn.Sequential(
-            nn.Linear(LSTM_HID, LSTM_HID // 2),
+        self.edge_index  = edge_index
+        self.edge_weight = edge_weight
+        self.num_nodes   = num_nodes   
+        # use the passed‑in dims, not hard‑coded constants:
+        self.gcn1        = GCNConv(feat_dim, embed_dim)
+        self.gcn2        = GCNConv(embed_dim, embed_dim)
+        self.county_bias = nn.Embedding(num_nodes, embed_dim)
+        self.lstm        = nn.LSTM(input_size=embed_dim,
+                                   hidden_size=lstm_hid,
+                                   batch_first=True)
+        self.mlp         = nn.Sequential(
+            nn.Linear(lstm_hid, lstm_hid // 2),
             nn.ReLU(),
-            nn.Linear(LSTM_HID // 2, 1)
+            nn.Linear(lstm_hid // 2, 1),
         )
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -80,15 +80,17 @@ class SpatioTemporalOutageModel(nn.Module):
         returns: Tensor[N] of outage logits or predictions
         """
         T, N, _ = x.shape
-        assert N == NUM_NODES, f"..."
+        assert N == self.num_nodes, f"Expected {self.num_nodes} nodes but got {N}"
         x = x.to(DEVICE)
+        ei = self.edge_index
+        ew = self.edge_weight
         
         # 1) Spatial encoding at each timestep
         embeds = []
         for t in range(T):
-            h = self.gcn1(x[t], edge_index, edge_weight)
+            h = self.gcn1(x[t], ei, ew)
             h = F.relu(h)
-            h = self.gcn2(h, edge_index, edge_weight)
+            h = self.gcn2(h, ei, ew)
             embeds.append(h)
         # embeds: list of T tensors [N, EMBED_DIM] → stack → [T, N, EMBED_DIM]
         embeds = torch.stack(embeds, dim=0)
@@ -109,10 +111,3 @@ class SpatioTemporalOutageModel(nn.Module):
         preds = self.mlp(h_final).squeeze(-1) # [N]
         return preds
 
-if __name__ == "__main__":
-    # dummy data: 37 time steps, 3233 counties, 15 features
-    dummy = torch.randn(37, NUM_NODES, FEAT_DIM)
-    
-    model = SpatioTemporalOutageModel().to(DEVICE)
-    logits = model(dummy)  # [3233]
-    print("Output shape:", logits.shape)
