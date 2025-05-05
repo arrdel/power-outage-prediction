@@ -133,18 +133,9 @@ class ERA5Dataset(SpatioTemporalDataset):
         # weather -> interpolate to counties
 
         ds_w = self.ds.sel(time=slice(start, end)).compute()
-        ds_w = roll_longitude(ds_w)
-        ds_w = mirror_point_at_360(ds_w)
         cov = self._interpolate(ds_w)
 
-        # outage -> assume already on county ids
-        ds_out = xr.open_zarr(
-            self.outage_zarr_url, storage_options=self.storage_options
-        )
-        targ = ds_out.sel(time=slice(start, end)).compute()
-
-        return cov, targ
-
+        return cov
     def _interpolate(self, ds: xr.Dataset) -> xr.Dataset:
         """
         Interpolate all data_vars in ds from regular grid to county centroids.
@@ -171,7 +162,7 @@ class ERA5Dataset(SpatioTemporalDataset):
     def __getitem__(self, idx: int):
         # map sliding-window index to actual start/end timestamps
         start_idx, end_idx = self.indices[idx]
-        start_time = np.datetime_as_string(self.time_index[start_idx])
+        start_time = np.datetime_as_string(self.time_index[start_idx-self.window])
         end_time = np.datetime_as_string(self.time_index[end_idx + self.horizon])
         cov, targ = self.get_time_slice(start_time, end_time)
         # format into tsl.Data via parent helper
