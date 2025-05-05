@@ -1,11 +1,16 @@
-import pandas as pd
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
+import xarray as xr
 from tsl.ops.connectivity import edge_index_to_adj
+
+data_path = Path(__file__).parent.parent.parent / "data"
 
 
 def get_adj_matrix():
-    adj = pd.read_csv("../data/geographic/graph.csv")
-    target = pd.read_csv("../data/eaglei_data/eaglei_outages_2022.csv")
+    adj = pd.read_csv(data_path / "geographic/graph.csv")
+    target = pd.read_csv(data_path / "eaglei_data/eaglei_outages_2022.csv")
     # sum all edges per county
     adj = adj.groupby(["src", "dest"])["total_voltage"].sum().reset_index()
     # get all unique counties
@@ -63,4 +68,18 @@ def get_adj_matrix():
         adj_mapped["total_voltage"].values,
         len(fips2idx),
     )
-    return adj_mat
+    return adj_mat, target_mapped
+
+
+def get_weather_zarr():
+    ds = xr.open_zarr(
+        "gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+        # chunks=None,
+        chunks={"time": 48},
+        storage_options=dict(token="anon"),
+        consolidated=True,
+    )
+    model_level_data = ds.sel(
+        time=slice(ds.attrs["valid_time_start"], ds.attrs["valid_time_stop"])
+    )
+    return model_level_data
