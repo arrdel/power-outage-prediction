@@ -68,7 +68,7 @@ def get_adj_matrix():
         adj_mapped["total_voltage"].values,
         len(fips2idx),
     )
-    return adj_mat, target_mapped
+    return adj_mat, target_mapped, fips2idx
 
 
 def get_weather_zarr():
