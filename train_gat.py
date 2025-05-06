@@ -1,58 +1,115 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+from tsl.data.datamodule import (SpatioTemporalDataModule,
+                                 TemporalSplitter)
+from tsl.data.preprocessing import StandardScaler
+from tsl.metrics.torch import MaskedMAE, MaskedMAPE
+from tsl.engines import Predictor
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-import numpy as np
-from src.gat import STGAT
+from src.gnn_dataset import ERA5Dataset
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
+from src.gat import PFGAT
+
+from src.utils import get_adj_matrix
 from pathlib import Path
-from tsl.data import SpatioTemporalDataset
-from tqdm import tqdm
+# from pytorch_lightning.loggers import TensorBoardLogger
+data_path = Path("/home/jaydenfassett/powerup") / "data"
+# Normalize data using mean and std computed over time and node dimensions
+scalers = {'target': StandardScaler(axis=(0, 1))}
 
-def compute_rmse(y_pred, y_true):
-    return torch.sqrt(torch.mean((y_pred - y_true) ** 2)).item()
+# Split data sequentially:
+#   |------------ dataset -----------|
+#   |--- train ---|- val -|-- test --|
+splitter = TemporalSplitter(val_len=0.1, test_len=0.2)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = STGAT(in_channels=14,hidden_channels=128,out_channels=64).to(device)
+adj_mat, target_mapped, fips2idx = get_adj_matrix()
+dataset = ERA5Dataset(
+    target_mapped.resample("1h").median(),
+    covariates=None,
+    connectivity=adj_mat,
+    fips2idx=fips2idx,
+    weather_zarr_url="gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+    county_shapefile=data_path / "cb_2018_us_county_500k.shp",
+    window=12,
+    horizon=1,
+)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-loss_fn = nn.MSELoss()
-data = Path(__file__).parent/"data"/"tsldataset"/"dataset.tsl"
+dm = SpatioTemporalDataModule(
+    dataset=dataset,
+    scalers=scalers,
+    splitter=splitter,
+    batch_size=1,
+)
 
-train_loader: SpatioTemporalDataset = torch.load(data,weights_only=False)
 
-# === Training loop ===
-num_epochs = 100
-pbar = tqdm(range(num_epochs))
-for epoch in pbar:
-    model.train()
-    for samp in train_loader:
 
-        x, y = samp.x.to(device), samp.y.to(device)
-        if len(x.shape) < 4:
-            x = x.unsqueeze(0)
-        edge = samp.edge_index.to(device)
 
-        optimizer.zero_grad()
-        y_pred = model(x,edge)
+loss_fn = MaskedMAE()
 
-        loss = loss_fn(y_pred, y)
+metrics = {'mae': MaskedMAE(),
+           'mape': MaskedMAPE(),
+           'mae_at_15': MaskedMAE(at=2),  # '2' indicates the third time step,
+                                          # which correspond to 15 minutes ahead
+           'mae_at_30': MaskedMAE(at=5),
+           'mae_at_60': MaskedMAE(at=11)}
 
-        loss.backward()
-        optimizer.step()
-    pbar.set_description(f"Epoch {epoch}, loss_step: {loss.item()}")
+# setup predictor
 
-    # print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}")
+model = PFGAT(
+    hist_channels=1,
+    cov_channels=38,
+    hidden_channels=192,
+    gat_heads=2,
+    gat_out=64,
+    horizon=1,
+)
 
-# # === Evaluation with RMSE ===
-# model.eval()
-# preds, targets = [], []
-# with torch.no_grad():
-#     for x, y in train_loader:
-#         x, y = x.to(device), y.to(device)
-#         y_pred = model(x)
-#         preds.append(y_pred.cpu())
-#         targets.append(y.cpu())
+class GATPredictor(Predictor):
+    def training_step(self, batch, batch_idx):
+        x_hist = batch.x.unsqueeze(-1)   # (B, T, N, 1)
+        x_cov  = batch.ERA5               # (B, 38, T, N)
+        y      = batch.y                 # (B, horizon, N)
+        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+        return super()._shared_step(y_hat, y, 'train')
 
-# preds = torch.cat(preds, dim=0)
-# targets = torch.cat(targets, dim=0)
-# rmse = compute_rmse(preds, targets)
-# print(f"\nFinal RMSE: {rmse:.4f}")
+    def validation_step(self, batch, batch_idx):
+        x_hist = batch.x.unsqueeze(-1)
+        x_cov  = batch.ERA5
+        y      = batch.y
+        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+        return super()._shared_step(y_hat, y, 'val')
+
+    def test_step(self, batch, batch_idx):
+        x_hist = batch.x.unsqueeze(-1)
+        x_cov  = batch.ERA5
+        y      = batch.y
+        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+        return super()._shared_step(y_hat, y, 'test')
+
+predictor = GATPredictor(
+    model=model,
+    optim_class=torch.optim.Adam,
+    optim_kwargs={'lr': 0.001},
+    loss_fn=loss_fn,
+    metrics=metrics
+)
+
+
+checkpoint_callback = ModelCheckpoint(
+    dirpath='logs',
+    save_top_k=1,
+    monitor='val_mae',
+    mode='min',
+)
+# logger = TensorBoardLogger(
+#     save_dir="tb_logs",
+#     name="stgat_experiment"
+# )
+trainer = pl.Trainer(max_epochs=100,
+                    #  logger=logger,
+                    #  gpus=0 if torch.cuda.is_available() else None,
+                     limit_train_batches=100,  # end an epoch after 100 updates
+                     callbacks=[checkpoint_callback])
+
+trainer.fit(predictor, datamodule=dm)

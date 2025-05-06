@@ -15,92 +15,129 @@ class Encoder(nn.Module):
         self.attn = SpatioTemporalTransformerLayer(
             input_size=in_channels,
             hidden_size=hidden_channels,
-            ff_size=2*hidden_channels,
+            ff_size=2 * hidden_channels,
             activation='relu',
             dropout=0.1,
         )
-        self.gat = GATConv(hidden_channels, hidden_channels, heads=gat_heads, concat=False)
-
-    def forward(self, x, edge_index):
-        x = x.permute(0, 2, 1, 3) # B F T N
-        x = self.attn(x)              # → (B, N, hidden_channels)
-        # B, N, T, H  = x.shape
-        return x # B, N, T, H
+        # we won’t use the inner GAT here, only the ST‐transformer
+    def forward(self, x):
+        # x: (B, T, N, C) → attn wants (B, N, T, C)
+        x = x.permute(0, 2, 1, 3)
+        return self.attn(x)    # → (B, N, hidden_channels)
 
 class PFGAT(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels,
-                 gat_heads=4, output_features=14):
+    def __init__(self,
+                 hist_channels: int,
+                 cov_channels: int,
+                 hidden_channels: int,
+                 gat_heads: int = 4,
+                 gat_out: int = 64,
+                 horizon: int = 1):
         super().__init__()
-        # 1) Encoder
-        self.encoder = Encoder(in_channels,hidden_channels,gat_heads)
+        self.total_in = hist_channels + cov_channels
+        self.encoder = Encoder(self.total_in, hidden_channels, gat_heads)
 
-        # 2) Two GATConv layers
+        # two GAT layers on the encoded node embeddings
         self.gat1 = GATConv(
             in_channels=hidden_channels,
             out_channels=hidden_channels // gat_heads,
             heads=gat_heads,
-            concat=True
+            concat=True,
         )
         self.gat2 = GATConv(
             in_channels=hidden_channels,
-            out_channels=out_channels,
+            out_channels=gat_out,
             heads=1,
-            concat=False
+            concat=False,
         )
-        # 3) Final FFN output
-        self.ffn = nn.Linear(out_channels, output_features)
 
+        # final linear to your forecast horizon
+        self.ffn = nn.Linear(gat_out, horizon)
 
-    def forward(self, x, edge_index):
-        shape = x.shape
-        assert len(shape) == 4, "add batch dim"
-        B, T, N, n_features = shape
-        x = self.encoder(x,edge_index) # B, N, T, H
-        # exit()
-        x = x[:,:,-1,:] # Taking the last step since it's been
+    def forward(self, x_hist, x_cov, edge_index):
+        """
+        x_hist: (B, T, N, hist_channels) — your “input” field
+        x_cov:  (B, f_cov, T, N)       — your ERA5 covariates
+        edge_index: ([2, E])          — standard PyG edge index
+        """
+        B, T, N, _ = x_hist.shape
 
-        
-        x = x.view(B * N, -1)         # → (B*N, hidden_channels)
-        # replicate edges across batch
+        # 1) bring covariates into (B, T, N, cov_channels)
+        x_cov = x_cov.permute(0, 2, 3, 1)
+
+        # 2) concatenate along feature‐axis → (B, T, N, total_in)
+        x = torch.cat([x_hist, x_cov], dim=-1)
+
+        # 3) ST‐transformer → (B, N, hidden_channels)
+        x = self.encoder(x)
+
+        # 4) take the “last time” is already collapsed by the transformer,
+        #    so x is per‐node embedding
+        x = x.view(B * N, -1)
+
+        # 5) replicate edge_index for batch
+        E = edge_index.size(1)
         edge_index = edge_index.repeat(1, B) + \
-                     torch.arange(B, device=x.device).repeat_interleave(edge_index.size(1)) * N
+            torch.arange(B, device=x.device).repeat_interleave(E) * N
 
-        # graph attention
+        # 6) graph attention
         x = F.elu(self.gat1(x, edge_index))
-        x = self.gat2(x, edge_index)  # → (B*N, out_channels)
+        x = self.gat2(x, edge_index)       # → (B*N, gat_out)
 
-        # un-flatten and final MLP
-        x = x.view(B, N, -1)          # → (B, N, out_channels)
-        x = self.ffn(x)               # → (B, N, horizon)
+        # 7) back to (B, N, gat_out), then per‐node horizon
+        x = x.view(B, N, -1)
+        x = self.ffn(x)                    # → (B, N, horizon)
 
-        return x.permute(0, 2, 1)     # → (B, horizon, N)
+        # 8) permute to (B, horizon, N)
+        return x.permute(0, 2, 1)
+if __name__ == "__main__":
+    from src.gnn_dataset import ERA5Dataset
+    path = "/home/jaydenfassett/amlproject/data/county_data"
+    data = Path(__file__).parent.parent/"data"/"tsldataset"/"dataset.tsl"
 
-# if __name__ == "__main__":
-    # path = "/home/jaydenfassett/amlproject/data/county_data"
-    # data = Path(__file__).parent.parent/"data"/"tsldataset"/"dataset.tsl"
-
-    # # dataset = SpatioTemporalDataset.load(data)
+    # dataset = SpatioTemporalDataset.load(data)
 
     # dataset: SpatioTemporalDataset = torch.load(
     #     data,
     #     weights_only=False,)
-    # print(dataset)
+        # print(dataset)
+    from src.utils import get_adj_matrix
+    from pathlib import Path
 
+    data_path = Path("/home/jaydenfassett/powerup") / "data"
 
+    adj_mat, target_mapped = get_adj_matrix()
+    dataset = ERA5Dataset(
+        target_mapped.resample("1h").median(),
+        covariates=None,
+        connectivity=adj_mat,
+        weather_zarr_url="gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+        county_shapefile=data_path / "cb_2018_us_county_500k.shp",
+        window=12,
+        horizon=1,
+    )
+    print(dataset)
+    print(dataset.shape)
+    sample = dataset[0]
+    x = sample.x # T, N, F
+    x = x.unsqueeze(0)
+    y = sample.y
 
-    # sample = dataset[0]
-    # x = sample.x # T, N, F
-    # x = x.unsqueeze(0)
-    # y = sample.y
-
-    # # print(x.shape)
-    # # exit()
-    # edge = sample.edge_index
+    # print(x.shape)
+    # exit()
+    edge = sample.edge_index
+    qq = PFGAT(
+    in_channels=1,
+    hidden_channels=192,
+    gat_heads=2,
+    out_channels=64,
+    output_features=1   # or whatever your horizon is
+    )
 
     # qq = PFGAT(in_channels=14,hidden_channels=192,gat_heads=2,out_channels=64)
 
 
-    # pred = qq.forward(x,edge)
-    # print("y shape",y.shape)
+    pred = qq.forward(x,edge)
+    print("y shape",y.shape)
 
-    # print("output",pred.shape)
+    print("output",pred.shape)
