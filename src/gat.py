@@ -5,8 +5,8 @@ from tsl.data import SpatioTemporalDataset
 from torch_geometric.nn import GATConv
 from pathlib import Path
 import torch.nn.functional as F
-
-
+from torch_geometric.utils import add_self_loops
+from tsl.ops.connectivity import adj_to_edge_index
 class Encoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, gat_heads):
         super().__init__()
@@ -45,12 +45,15 @@ class PFGAT(nn.Module):
             out_channels=hidden_channels // gat_heads,
             heads=gat_heads,
             concat=True,
+            add_self_loops=False,
+
         )
         self.gat2 = GATConv(
             in_channels=hidden_channels,
             out_channels=gat_out,
             heads=1,
             concat=False,
+            add_self_loops=False,
         )
 
         # final linear to your forecast horizon
@@ -63,7 +66,9 @@ class PFGAT(nn.Module):
         edge_index: ([2, E])          — standard PyG edge index
         """
         B, T, N, _ = x_hist.shape
-
+        edge_index = edge_index.to(torch.int32) # Converts to float & re-orders to get (2, E)
+        edge_index = adj_to_edge_index(edge_index)[0]
+        print(edge_index.shape)
         # 1) bring covariates into (B, T, N, cov_channels)
         # x_cov = x_cov.permute(0, 2, 3, 1)
 
@@ -71,15 +76,22 @@ class PFGAT(nn.Module):
         x = torch.cat([x_hist, x_cov], dim=-1)
         
 
-        # 3) ST‐transformer → (B, N, hidden_channels)
-        x = self.encoder(x)
+        # # 3) ST‐transformer → (B, N, hidden_channels)
+        # x = self.encoder(x)
 
-        # 4) take the “last time” is already collapsed by the transformer,
-        #    so x is per‐node embedding
-        x = x.view(B * N, -1)
+        # # 4) take the “last time” is already collapsed by the transformer,
+        # #    so x is per‐node embedding
+        # x = x.view(B * N, -1)
 
         # 5) replicate edge_index for batch
+        # 3) ST‐transformer → (B, N, T, hidden_channels)
+        x_seq = self.encoder(x)
+        # 4) take the last time step → (B, N, hidden_channels)
+        x = x_seq[:, :, -1, :]
+        # 5) flatten for GAT → (B*N, hidden_channels)
+        x = x.view(B * N, -1)
         E = edge_index.size(1)
+        
         edge_index = (
             edge_index.repeat(1, B)
             + torch.arange(B, device=x.device).repeat_interleave(E) * N

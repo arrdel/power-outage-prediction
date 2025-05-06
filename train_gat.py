@@ -69,24 +69,25 @@ model = PFGAT(
 class GATPredictor(Predictor):
     def training_step(self, batch, batch_idx):
         x_hist = batch.x                # (B, T, N, 1)
-        x_cov  = batch.ERA5               # (B, 38, T, N)
-        y      = batch.y                 # (B, horizon, N)
+        x_cov  = batch.ERA5             # (B, 38, T, N)
+        y      = batch.y                # (B, horizon, N)
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return super()._shared_step(y_hat, y, 'train')
+        return self.shared_step(y_hat, y, 'train')
 
     def validation_step(self, batch, batch_idx):
         x_hist = batch.x
         x_cov  = batch.ERA5
         y      = batch.y
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return super()._shared_step(y_hat, y, 'val')
+        return self.shared_step(y_hat, y, 'val')
 
     def test_step(self, batch, batch_idx):
         x_hist = batch.x
         x_cov  = batch.ERA5
         y      = batch.y
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return super()._shared_step(y_hat, y, 'test')
+        return self.shared_step(y_hat, y, 'test')
+
 
 predictor = GATPredictor(
     model=model,
