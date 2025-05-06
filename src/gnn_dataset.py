@@ -1,10 +1,36 @@
+from typing import Optional, Union, List, Tuple
 import xarray as xr
 import numpy as np
-import fsspec
 import scipy.spatial
 import geopandas as gpd
 from pathlib import Path
-from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset
+from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset, parse_index
+from tsl.data import (
+    BatchMap,
+    SpatioTemporalDataModule,
+    StaticBatch,
+    Data,
+    BatchMapItem,
+    SynchMode,
+)
+
+from tsl.typing import DataArray, IndexSlice, SparseTensArray, TemporalIndex, TensArray
+
+
+from tsl.data.preprocessing.scalers import Scaler, ScalerModule
+
+from tsl.data.synch_mode import HORIZON, STATIC, WINDOW
+import torch
+
+
+class Dummy:
+    batch_pattern: str
+    pattern: str
+    synch_mode: SynchMode
+    keys = []
+    cat_dim = 0
+    preprocess: bool
+    shape = None
 
 
 def lon_to_360(dlon: float) -> float:
@@ -29,39 +55,21 @@ def mirror_point_at_360(ds: xr.Dataset) -> xr.Dataset:
     return xr.concat([ds, extra], dim="longitude")
 
 
-def build_triangulation(lons: np.ndarray, lats: np.ndarray) -> scipy.spatial.Delaunay:
-    """
-    Build a Delaunay triangulation over the 2D lon/lat grid.
-    """
-    # create mesh of points
-    LON, LAT = np.meshgrid(lons, lats)
-    points = np.vstack([LON.ravel(), LAT.ravel()]).T
-    return scipy.spatial.Delaunay(points)
+
+def build_triangulation(x, y):
+  grid = np.stack([x, y], axis=1)
+  return scipy.spatial.Delaunay(grid)
 
 
-def interpolate(
-    data: np.ndarray, tri: scipy.spatial.Delaunay, mesh: np.ndarray
-) -> np.ndarray:
-    """
-    Barycentric interpolation of flattened data onto the mesh points.
-    - data: array of shape (time, n_grid_points)
-    - tri: Delaunay triangulation over grid points
-    - mesh: array of shape (n_targets, 2) with lon/lat of target centroids
-    Returns: interpolated array of shape (time, n_targets)
-    """
-    # find simplex for each target point
-    simplex = tri.find_simplex(mesh)
-    transform = tri.transform[simplex]
-    coords = mesh - transform[:, 2]
-    bary = np.einsum("ijk,ik->ij", transform[:, :2, :], coords)
-    bary_coords = np.hstack([bary, 1 - bary.sum(axis=1, keepdims=True)])
-    # gather values
-    data_pts = data[:, tri.simplices[simplex]].transpose(
-        1, 0, 2
-    )  # (n_targets, time, 3)
-    interp = np.einsum("ti,tri->tr", bary_coords, data_pts)
-    interp[simplex == -1] = np.nan
-    return interp
+def interpolate(data, tri, mesh):
+  indices = tri.find_simplex(mesh)
+  ndim = tri.transform.shape[-1]
+  T_inv = tri.transform[indices, :ndim, :]
+  r = tri.transform[indices, ndim, :]
+  c = np.einsum('...ij,...j', T_inv, mesh - r)
+  c = np.concatenate([c, 1 - c.sum(axis=-1, keepdims=True)], axis=-1)
+  result = np.einsum('...i,...i', data[:, tri.simplices[indices]], c)
+  return np.where(indices == -1, np.nan, result)
 
 
 class ERA5Dataset(SpatioTemporalDataset):
@@ -76,16 +84,16 @@ class ERA5Dataset(SpatioTemporalDataset):
         covariates,
         connectivity,
         weather_zarr_url: str,
-        county_shapefile: str,
+        county_shapefile: Path | str,
         window: int,
         horizon: int,
         delay: int = 0,
         stride: int = 1,
-        storage_options: dict = None,
+        storage_options: Optional[dict] = None,
     ):
         # initialize base sliding-window dataset (no in-memory target)
         super().__init__(
-            target=target,  # placeholder; we override __getitem__
+            target=target,
             covariates=covariates,
             connectivity=connectivity,
             window=window,
@@ -107,17 +115,32 @@ class ERA5Dataset(SpatioTemporalDataset):
         ds = xr.open_zarr(
             self.weather_zarr_url,
             storage_options=self.storage_options,
-            chunks={"time": 48},
+            chunks={"time": window},  # type:ignore
             consolidated=True,
         )
-        self.ds = ds
-        ds0 = ds.isel(time=0).compute()
-        # ds0 = roll_longitude(ds0)
-        # ds0 = mirror_point_at_360(ds0)
-        self.grid_tri = build_triangulation(
-            np.unique(ds0.longitude.values),
-            np.unique(ds0.latitude.values),
+        assert self.index is not None
+        self.ds = ds.sel(time=slice(self.index.min().date(), self.index.max().date()))
+        ds0 = self.ds.isel(time=slice(0,1)).compute()
+        print("selecting region")
+        US_ds=ds0.where(
+            (ds0.longitude > lon_to_360(-171.79)) & (ds0.latitude > 18.91) &
+            (ds0.longitude < lon_to_360(-66.96)) & (ds0.latitude < 71.35),
+            drop=True
         )
+        print("Buiding triangulation")
+        self.grid_tri = build_triangulation(
+            US_ds.longitude,
+            US_ds.latitude,
+        )
+        print("Triangulation done")
+        era5_pattern = Dummy()
+        era5_pattern.batch_pattern = "f t n"
+        era5_pattern.pattern = "f t n"
+        era5_pattern.preprocess = True
+        era5_pattern.synch_mode = WINDOW
+
+        self.input_map.__dict__["ERA5"] = era5_pattern
+        self.patterns["ERA5"] = "f t n"
 
         # # store all available timestamps for indexing
         # ds_time = xr.open_zarr(
@@ -125,54 +148,123 @@ class ERA5Dataset(SpatioTemporalDataset):
         # )
         # self.time_index = ds_time.time.values
 
-    def get_time_slice(self, start: str, end: str):
+    def add_weather_cov(
+        self,
+        name: str,
+        value: DataArray,
+        pattern: Optional[str] = None,
+        add_to_input_map: bool = True,
+        synch_mode: Optional[SynchMode] = None,
+        preprocess: bool = True,
+        convert_precision: bool = True,
+    ):
+        # validate name. name cannot be an attribute of self, but allow override
+        self._check_name(name)
+        value, pattern = self._parse_covariate(
+            value, pattern, name=name, convert_precision=convert_precision
+        )
+        self._covariates[name] = dict(value=value, pattern=pattern)
+        if add_to_input_map:
+            self.input_map[name] = BatchMapItem(
+                name,
+                synch_mode,
+                preprocess,
+                cat_dim=None,
+                pattern=pattern,
+                shape=value.size(),
+            )
+
+    def get_time_slice(self, time_index):
         """
         Load weather covariates and outage targets for a given time range.
         Returns two xarray Datasets: covariates (vars × time × county) and targets.
         """
         # weather -> interpolate to counties
 
-        ds_w = self.ds.sel(time=slice(start, end)).compute()
-        cov = self._interpolate(ds_w)
+        ds_w = self.ds.isel(time=time_index).compute()
+        cov = torch.tensor(self._interpolate(ds_w))
+        
 
         return cov
+
     def _interpolate(self, ds: xr.Dataset) -> xr.Dataset:
         """
         Interpolate all data_vars in ds from regular grid to county centroids.
         """
-        # select US region if needed (optional)
-        data = {}
+        tri = self.grid_tri
+        centroid_coords = self.county_centroids
+        # ds = ds.where(
+        #     (ds.longitude > lon_to_360(-171.79)) & (ds.latitude > 18.91) &
+        #     (ds.longitude < lon_to_360(-66.96)) & (ds.latitude < 71.35),
+        #     drop=True
+        # )
+        interpolated_data = []
         for var in ds.data_vars:
-            arr = ds[var].values  # shape (time, lat, lon)
-            nt, ny, nx = arr.shape
-            flat = arr.reshape(nt, -1)
-            interp = interpolate(flat, self.grid_tri, self.county_centroids)
-            data[var] = (("time", "county"), interp)
+            print(f"Interpolating {var}")
+            interpolated_data.append(interpolate(ds[var].values, tri, centroid_coords))
+        return torch.tensor(interpolated_data)
+ 
+    def _add_to_sample(
+        self, out, synch_mode, endpoint="input", time_index=None, node_index=None
+    ):
+        # input_map
+        batch_map: BatchMap = getattr(self, f"{endpoint}_map")
+        for key, item in batch_map.by_synch_mode(synch_mode).items():
+            if endpoint == "input" and key == "ERA5":
+                weather_data = self.get_time_slice(time_index)
+                if len(item.keys) > 1:
+                    tensor, scaler = self.collate_weather_elem(
+                        weather_data,
+                        node_index=node_index,  # type:ignore
+                        time_index=time_index,  # type:ignore
+                    )
+                else:
+                    scaler = None
+                    if key in self.scalers is not None:
+                        scaler = self.scalers[key].slice(
+                            time_index=time_index, node_index=node_index
+                        )
+                        tensor = scaler.transform(weather_data)
+                    else:
+                        tensor = weather_data
 
-        return xr.Dataset(
-            data_vars=data,
-            coords={
-                "time": ds.time.values,
-                "county": np.arange(self.county_centroids.shape[0]),
-                "longitude": ("county", self.county_centroids[:, 0]),
-                "latitude": ("county", self.county_centroids[:, 1]),
-            },
-        )
+            else:
+                if len(item.keys) > 1:
+                    tensor, scaler = self.collate_item_elem(
+                        key,
+                        time_index=time_index,  # type:ignore
+                        node_index=node_index,  # type:ignore
+                    )
+                else:
+                    tensor, scaler = self.get_tensor(
+                        item.keys[0],
+                        preprocess=item.preprocess,
+                        time_index=time_index,  # type:ignore
+                        node_index=node_index,  # type:ignore
+                    )
+            if endpoint == "auxiliary":
+                out[key] = tensor
+            else:
+                getattr(out, endpoint)[key] = tensor
+            if scaler is not None:
+                out.transform[key] = scaler
 
-    def __getitem__(self, idx: int):
-        # map sliding-window index to actual start/end timestamps
-        start_idx, end_idx = self.indices[idx]
-        start_time = np.datetime_as_string(self.time_index[start_idx-self.window])
-        end_time = np.datetime_as_string(self.time_index[end_idx + self.horizon])
-        cov, targ = self.get_time_slice(start_time, end_time)
-        # format into tsl.Data via parent helper
-        return super()._build_sample(
-            target=targ.to_array().transpose("time", "county", ...),
-            covariates=cov.to_array().transpose("time", "county", ...),
-        )
-
-    def __len__(self):
-        return len(self.indices)  # number of sliding windows
+    def collate_weather_elem(
+        self,
+        ds,
+        time_index: Union[List, torch.Tensor],
+        node_index: Union[List, torch.Tensor],
+    ) -> Tuple[torch.Tensor, Optional[ScalerModule]]:
+        # expand and concatenate tensors
+        x = ds
+        # get scaler (if any)
+        scaler = None
+        if "ERA5" in self._batch_scalers:  # type:ignore
+            scaler = self._batch_scalers["ERA5"].slice(  # type:ignore
+                time_index=time_index, node_index=node_index
+            )
+            x = scaler.transform(x)
+        return x, scaler
 
 
 if __name__ == "__main__":
@@ -182,7 +274,7 @@ if __name__ == "__main__":
     data_path = Path(__file__).parent.parent / "data" / "geographic"
 
     adj_mat, target_mapped = get_adj_matrix()
-    ERA5Dataset(
+    dataset = ERA5Dataset(
         target_mapped.resample("1h").median(),
         covariates=None,
         connectivity=adj_mat,
@@ -191,3 +283,4 @@ if __name__ == "__main__":
         window=12,
         horizon=1,
     )
+    print(dataset[0])
