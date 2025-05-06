@@ -6,6 +6,8 @@ import geopandas as gpd
 from pathlib import Path
 from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset
 from tsl.data import (
+SpatioTemporalDataModule)
+from tsl.data import (
     BatchMap,
     BatchMapItem,
     SynchMode,
@@ -90,6 +92,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         delay: int = 0,
         stride: int = 1,
         storage_options: Optional[dict] = None,
+        **kwargs,
     ):
         # initialize base sliding-window dataset (no in-memory target)
         super().__init__(
@@ -100,6 +103,7 @@ class ERA5Dataset(SpatioTemporalDataset):
             horizon=horizon,
             delay=delay,
             stride=stride,
+            **kwargs
         )
         self.weather_zarr_url = weather_zarr_url
         self.storage_options = storage_options or {"token": "anon"}
@@ -148,6 +152,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         era5_pattern.pattern = "t n f"
         era5_pattern.preprocess = True
         era5_pattern.synch_mode = WINDOW
+        self._covariates["ERA5"] = dict(value=None, pattern="t n f")
 
         self.input_map.__dict__["ERA5"] = era5_pattern
         self.patterns["ERA5"] = "t n f"

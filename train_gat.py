@@ -14,7 +14,7 @@ from src.gat import PFGAT
 from src.utils import get_adj_matrix
 from pathlib import Path
 # from pytorch_lightning.loggers import TensorBoardLogger
-data_path = Path("/home/jaydenfassett/powerup") / "data"
+data_path = Path(__file__).parent / "data" / "geographic"
 # Normalize data using mean and std computed over time and node dimensions
 scalers = {'target': StandardScaler(axis=(0, 1))}
 
@@ -67,21 +67,21 @@ model = PFGAT(
 
 class GATPredictor(Predictor):
     def training_step(self, batch, batch_idx):
-        x_hist = batch.x.unsqueeze(-1)   # (B, T, N, 1)
+        x_hist = batch.x                # (B, T, N, 1)
         x_cov  = batch.ERA5               # (B, 38, T, N)
         y      = batch.y                 # (B, horizon, N)
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
         return super()._shared_step(y_hat, y, 'train')
 
     def validation_step(self, batch, batch_idx):
-        x_hist = batch.x.unsqueeze(-1)
+        x_hist = batch.x
         x_cov  = batch.ERA5
         y      = batch.y
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
         return super()._shared_step(y_hat, y, 'val')
 
     def test_step(self, batch, batch_idx):
-        x_hist = batch.x.unsqueeze(-1)
+        x_hist = batch.x
         x_cov  = batch.ERA5
         y      = batch.y
         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
