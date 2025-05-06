@@ -66,30 +66,30 @@ model = PFGAT(
     horizon=1,
 )
 
-class GATPredictor(Predictor):
-    def training_step(self, batch, batch_idx):
-        x_hist = batch.x                # (B, T, N, 1)
-        x_cov  = batch.ERA5             # (B, 38, T, N)
-        y      = batch.y                # (B, horizon, N)
-        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return self.shared_step(y_hat, y, 'train')
+# class GATPredictor(Predictor):
+#     def training_step(self, batch, batch_idx):
+#         x_hist = batch.x                # (B, T, N, 1)
+#         x_cov  = batch.ERA5             # (B, 38, T, N)
+#         y      = batch.y                # (B, horizon, N)
+#         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+#         return super().training_step(batch, batch_idx)
 
-    def validation_step(self, batch, batch_idx):
-        x_hist = batch.x
-        x_cov  = batch.ERA5
-        y      = batch.y
-        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return self.shared_step(y_hat, y, 'val')
+#     def validation_step(self, batch, batch_idx):
+#         x_hist = batch.x
+#         x_cov  = batch.ERA5
+#         y      = batch.y
+#         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+#         return super().validation_step(batch, batch_idx) 
 
-    def test_step(self, batch, batch_idx):
-        x_hist = batch.x
-        x_cov  = batch.ERA5
-        y      = batch.y
-        y_hat  = self.model(x_hist, x_cov, batch.edge_index)
-        return self.shared_step(y_hat, y, 'test')
+#     def test_step(self, batch, batch_idx):
+#         x_hist = batch.x
+#         x_cov  = batch.ERA5
+#         y      = batch.y
+#         y_hat  = self.model(x_hist, x_cov, batch.edge_index)
+#         return super().test_step(batch, batch_idx)
 
 
-predictor = GATPredictor(
+predictor = Predictor(
     model=model,
     optim_class=torch.optim.Adam,
     optim_kwargs={'lr': 0.001},
