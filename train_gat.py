@@ -10,13 +10,13 @@ from tsl.data.datamodule import SpatioTemporalDataModule, TemporalSplitter
 from tsl.data.loader import StaticGraphLoader
 from tsl.data.preprocessing import StandardScaler
 from tsl.engines import Predictor
-from tsl.metrics.torch import MaskedMAE, MaskedMAPE
+from tsl.metrics.torch import MaskedMAE, MaskedMAPE, MaskedMSE
 
 from src.gat import PFGAT
 from src.gnn_dataset import ERA5Dataset
 from src.utils import get_adj_matrix
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import dask
 dask.config.set(scheduler='synchronous')  # Do this in __getitem__
 # from pytorch_lightning.loggers import TensorBoardLogger
@@ -26,7 +26,7 @@ scalers = {"target": StandardScaler(axis=(0, 1))}
 # Split data sequentially:
 #   |------------ dataset -----------|
 #   |--- train ---|- val -|-- test --|
-splitter = TemporalSplitter(val_len=0.1, test_len=0.2)
+splitter = TemporalSplitter(val_len=0.001, test_len=0.2)
 
 adj_mat, target_mapped, fips2idx = get_adj_matrix()
 dataset = ERA5Dataset(
@@ -82,11 +82,12 @@ dm = ERA5DataModule(
     scalers=scalers,
     splitter=splitter,
     batch_size=2,
-    workers=12
+    workers=12,
+    prefetch_factor=3,
 )
 
 
-loss_fn = MaskedMAE()
+loss_fn = MaskedMSE()
 
 metrics = {
     "mae": MaskedMAE(),
@@ -98,13 +99,25 @@ metrics = {
 model = PFGAT(
     hist_channels=1,
     cov_channels=38,
-    hidden_channels=192,
-    gat_heads=2,
+    hidden_channels=256,
+    gat_heads=12,
     gat_out=64,
     horizon=1,
 )
+class MyPredictor(Predictor):
+    
+    def log_loss(self, name, loss, **kwargs):
+        """"""
+        self.log(name + '_loss',
+                 loss.detach(),
+                 on_step=True,
+                 on_epoch=True,
+                 logger=True,
+                 prog_bar=False,
+                 **kwargs)
 
-predictor = Predictor(
+        
+predictor = MyPredictor(
     model=model,
     optim_class=torch.optim.Adam,
     optim_kwargs={"lr": 0.001},
@@ -116,7 +129,7 @@ predictor = Predictor(
 checkpoint_callback = ModelCheckpoint(
     dirpath="logs",
     save_top_k=1,
-    monitor="val_mae",
+    monitor="val_mse",
     mode="min",
 )
 # logger = TensorBoardLogger(
@@ -127,10 +140,12 @@ checkpoint_callback = ModelCheckpoint(
 trainer = pl.Trainer(
     max_epochs=100,
     num_sanity_val_steps=0,
+    limit_val_batches=12,
     #  logger=logger,
     #  gpus=0 if torch.cuda.is_available() else None,
-    limit_train_batches=100,  # end an epoch after 100 updates
+    limit_train_batches=300, 
     callbacks=[checkpoint_callback],
+    precision="bf16" if torch.cuda.is_bf16_supported() else "16",
 )
 
 trainer.fit(predictor, datamodule=dm)

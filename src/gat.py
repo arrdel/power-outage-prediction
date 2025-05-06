@@ -71,7 +71,6 @@ class PFGAT(nn.Module):
         B, T, N, _ = x_hist.shape
         edge_index = edge_index.to(torch.int32) # Converts to float & re-orders to get (2, E)
         edge_index = adj_to_edge_index(edge_index)[0]
-        print(edge_index.shape)
         # 1) bring covariates into (B, T, N, cov_channels)
         # x_cov = x_cov.permute(0, 2, 3, 1)
 
@@ -109,7 +108,7 @@ class PFGAT(nn.Module):
         x = self.ffn(x)  # → (B, N, horizon)
 
         # 8) permute to (B, horizon, N)
-        return x
+        return x.unsqueeze(1)  # → (B, horizon, N)
 
 
 # if __name__ == "__main__":
