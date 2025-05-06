@@ -4,17 +4,14 @@ import numpy as np
 import scipy.spatial
 import geopandas as gpd
 from pathlib import Path
-from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset, parse_index
+from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset
 from tsl.data import (
     BatchMap,
-    SpatioTemporalDataModule,
-    StaticBatch,
-    Data,
     BatchMapItem,
     SynchMode,
 )
 import warnings
-from tsl.typing import DataArray, IndexSlice, SparseTensArray, TemporalIndex, TensArray
+from tsl.typing import DataArray
 
 
 from tsl.data.preprocessing.scalers import Scaler, ScalerModule
@@ -114,16 +111,11 @@ class ERA5Dataset(SpatioTemporalDataset):
         self.counties = self.counties[county_mask]
         # Rename fips2idx index to match GEOID
         fips2idx.index.name = "GEOID"
-        # pre_reorder = copy.deepcopy(self.counties)
         # Reorder counties to match the order of fips2idx.index
         self.counties = self.counties.set_index("GEOID").loc[fips2idx.index].reset_index()
 
         # Verify the reordering
         assert all(self.counties["GEOID"].values == fips2idx.index.values), "Reordering failed: GEOID order mismatch"
-        # for i, geoid in enumerate(fips2idx.index):
-        #     assert self.counties.loc[self.counties["GEOID"] == geoid].equals(
-        #     pre_reorder.loc[pre_reorder["GEOID"] == geoid]
-        #     ), f"Row mismatch after {i} iterations for GEOID {geoid}, \n {self.counties.loc[self.counties["GEOID"] == geoid]} != \n\t {pre_reorder.loc[pre_reorder["GEOID"] == geoid]}"
         self.county_centroids = np.array(
             [[lon_to_360(pt.x), pt.y] for pt in self.counties.centroid]
         )
@@ -228,7 +220,10 @@ class ERA5Dataset(SpatioTemporalDataset):
         batch_map: BatchMap = getattr(self, f"{endpoint}_map")
         for key, item in batch_map.by_synch_mode(synch_mode).items():
             if endpoint == "input" and key == "ERA5":
-                weather_data = self.get_time_slice(time_index)
+                weather_data = []
+                for time_idx in time_index:
+                    weather_data.append(self.get_time_slice(time_idx))
+                weather_data = torch.stack(weather_data, dim=0)
                 if len(item.keys) > 1:
                     tensor, scaler = self.collate_weather_elem(
                         weather_data,
