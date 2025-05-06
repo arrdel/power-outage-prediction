@@ -45,7 +45,7 @@ class PFGAT(nn.Module):
             out_channels=hidden_channels // gat_heads,
             heads=gat_heads,
             concat=True,
-            add_self_loops=False,
+            # add_self_loops=False,
 
         )
         self.gat2 = GATConv(
@@ -53,18 +53,21 @@ class PFGAT(nn.Module):
             out_channels=gat_out,
             heads=1,
             concat=False,
-            add_self_loops=False,
+            # add_self_loops=False,
         )
 
         # final linear to your forecast horizon
         self.ffn = nn.Linear(gat_out, horizon)
 
-    def forward(self, x_hist, x_cov, edge_index):
+    def forward(self, x, ERA5, edge_index):
         """
         x_hist: (B, T, N, hist_channels) — your “input” field
         x_cov:  (B, f_cov, T, N)       — your ERA5 covariates
         edge_index: ([2, E])          — standard PyG edge index
         """
+        x_hist = x                # (B, T, N, 1)
+        x_cov  = ERA5             # (B, 38, T, N)
+
         B, T, N, _ = x_hist.shape
         edge_index = edge_index.to(torch.int32) # Converts to float & re-orders to get (2, E)
         edge_index = adj_to_edge_index(edge_index)[0]
@@ -106,7 +109,7 @@ class PFGAT(nn.Module):
         x = self.ffn(x)  # → (B, N, horizon)
 
         # 8) permute to (B, horizon, N)
-        return x.permute(0, 2, 1)
+        return x
 
 
 # if __name__ == "__main__":
