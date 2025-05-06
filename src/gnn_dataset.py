@@ -210,7 +210,11 @@ class ERA5Dataset(SpatioTemporalDataset):
                 chunks={"time": self.window},  # type:ignore
                 consolidated=True,
             )
+            
             ds_w = ds.isel(time=time_index).compute()
+            print("Are there nans in ds?", bool(ds.isnull().sum()))
+            
+            
             cov = torch.tensor(self._interpolate(ds_w))
 
         return cov

@@ -7,6 +7,7 @@ from pathlib import Path
 import torch.nn.functional as F
 from torch_geometric.utils import add_self_loops
 from tsl.ops.connectivity import adj_to_edge_index
+from tsl.nn.layers.base import NodeEmbedding
 class Encoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, gat_heads):
         super().__init__()
@@ -31,12 +32,15 @@ class PFGAT(nn.Module):
         hist_channels: int,
         cov_channels: int,
         hidden_channels: int,
+        n_nodes: int = 3186,
         gat_heads: int = 4,
         gat_out: int = 64,
         horizon: int = 1,
     ):
         super().__init__()
         self.total_in = hist_channels + cov_channels
+        self.emb = NodeEmbedding(n_nodes=n_nodes, emb_size=hidden_channels)
+
         self.encoder = Encoder(self.total_in, hidden_channels, gat_heads)
 
         # two GAT layers on the encoded node embeddings
@@ -87,7 +91,9 @@ class PFGAT(nn.Module):
 
         # 5) replicate edge_index for batch
         # 3) ST‐transformer → (B, N, T, hidden_channels)
-        x_seq = self.encoder(x)
+        print("Are there nans in x?", torch.isnan(x).any())
+        x_seq = self.encoder(x ) + self.emb()[None, :, None, :]
+        print("Are there nans in Encoder?", torch.isnan(x).any())
         # 4) take the last time step → (B, N, hidden_channels)
         x = x_seq[:, :, -1, :]
         # 5) flatten for GAT → (B*N, hidden_channels)
@@ -101,14 +107,18 @@ class PFGAT(nn.Module):
 
         # 6) graph attention
         x = F.elu(self.gat1(x, edge_index))
+        print("Are there nans in GAT1?", torch.isnan(x).any())
+        
         x = self.gat2(x, edge_index)  # → (B*N, gat_out)
+        print("Are there nans in GAT2?", torch.isnan(x).any())
 
         # 7) back to (B, N, gat_out), then per‐node horizon
         x = x.view(B, N, -1)
+        
         x = self.ffn(x)  # → (B, N, horizon)
 
-        # 8) permute to (B, horizon, N)
-        return x.unsqueeze(1)  # → (B, horizon, N)
+        print("Are there nans FFN out?", torch.isnan(x).any())
+        return x.unsqueeze(1)  # → (B, 1, N, horizon)
 
 
 # if __name__ == "__main__":

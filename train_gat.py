@@ -10,7 +10,7 @@ from tsl.data.datamodule import SpatioTemporalDataModule, TemporalSplitter
 from tsl.data.loader import StaticGraphLoader
 from tsl.data.preprocessing import StandardScaler
 from tsl.engines import Predictor
-from tsl.metrics.torch import MaskedMAE, MaskedMAPE, MaskedMSE
+from tsl.metrics.torch import MaskedMAE, MaskedMAPE, MaskedMSE, rmse
 
 from src.gat import PFGAT
 from src.gnn_dataset import ERA5Dataset
@@ -100,7 +100,7 @@ model = PFGAT(
     hist_channels=1,
     cov_channels=38,
     hidden_channels=256,
-    gat_heads=12,
+    gat_heads=8,
     gat_out=64,
     horizon=1,
 )
@@ -145,7 +145,7 @@ trainer = pl.Trainer(
     #  gpus=0 if torch.cuda.is_available() else None,
     limit_train_batches=300, 
     callbacks=[checkpoint_callback],
-    precision="bf16" if torch.cuda.is_bf16_supported() else "16",
+    # precision="bf16" if torch.cuda.is_bf16_supported() else "16",
 )
 
 trainer.fit(predictor, datamodule=dm)
