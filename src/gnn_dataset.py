@@ -138,18 +138,18 @@ class ERA5Dataset(SpatioTemporalDataset):
         assert self.index is not None
         self.ds = ds.sel(time=slice(self.index.min().date(), self.index.max().date()))
         ds0 = self.ds.isel(time=slice(0,1)).compute()
-        print("selecting region")
+        # print("selecting region")
         US_ds=ds0.where(
             (ds0.longitude > lon_to_360(-171.79)) & (ds0.latitude > 18.91) &
             (ds0.longitude < lon_to_360(-66.96)) & (ds0.latitude < 71.35),
             drop=True
         )
-        print("Buiding triangulation")
+        # print("Buiding triangulation")
         self.grid_tri = build_triangulation(
             US_ds.longitude,
             US_ds.latitude,
         )
-        print("Triangulation done")
+        # print("Triangulation done")
         era5_pattern = Dummy()
         era5_pattern.batch_pattern = "f t n"
         era5_pattern.pattern = "f t n"
@@ -217,7 +217,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         # )
         interpolated_data = []
         for var in ds.data_vars:
-            print(f"Interpolating {var}")
+            # print(f"Interpolating {var}")
             interpolated_data.append(interpolate(ds[var].values, tri, centroid_coords))
         return torch.tensor(interpolated_data)
  
