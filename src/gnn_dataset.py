@@ -223,7 +223,10 @@ class ERA5Dataset(SpatioTemporalDataset):
             if endpoint == "input" and key == "ERA5":
                 time_flat = time_index.flatten()
                 weather_data = self.get_time_slice(time_flat)
-                weather_data = rearrange(weather_data, "f (b t) n -> b t n f", b=time_index.shape[0], t=time_index.shape[1])
+                if time_index.ndim != 1:
+                    weather_data = rearrange(weather_data, "f (b t) n -> b t n f", b=time_index.shape[0], t=time_index.shape[1])
+                else:
+                    weather_data = rearrange(weather_data, "f t n -> t n f")
                 # weather_data = []
                 # for time_idx in time_index:
                 #     weather_data.append()
