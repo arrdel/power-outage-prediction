@@ -19,6 +19,7 @@ from tsl.data.preprocessing.scalers import Scaler, ScalerModule
 from tsl.data.synch_mode import HORIZON, STATIC, WINDOW
 import torch
 import copy
+from einops import rearrange
 # Suppress UserWarnings
 warnings.filterwarnings("ignore", category=UserWarning)
 class Dummy:
@@ -143,13 +144,13 @@ class ERA5Dataset(SpatioTemporalDataset):
         )
         # print("Triangulation done")
         era5_pattern = Dummy()
-        era5_pattern.batch_pattern = "f t n"
-        era5_pattern.pattern = "f t n"
+        era5_pattern.batch_pattern = "t n f"
+        era5_pattern.pattern = "t n f"
         era5_pattern.preprocess = True
         era5_pattern.synch_mode = WINDOW
 
         self.input_map.__dict__["ERA5"] = era5_pattern
-        self.patterns["ERA5"] = "f t n"
+        self.patterns["ERA5"] = "t n f"
 
         # # store all available timestamps for indexing
         # ds_time = xr.open_zarr(
@@ -220,10 +221,13 @@ class ERA5Dataset(SpatioTemporalDataset):
         batch_map: BatchMap = getattr(self, f"{endpoint}_map")
         for key, item in batch_map.by_synch_mode(synch_mode).items():
             if endpoint == "input" and key == "ERA5":
-                weather_data = []
-                for time_idx in time_index:
-                    weather_data.append(self.get_time_slice(time_idx))
-                weather_data = torch.stack(weather_data, dim=0)
+                time_flat = time_index.flatten()
+                weather_data = self.get_time_slice(time_flat)
+                weather_data = rearrange(weather_data, "f (b t) n -> b t n f", b=time_index.shape[0], t=time_index.shape[1])
+                # weather_data = []
+                # for time_idx in time_index:
+                #     weather_data.append()
+                # weather_data = torch.stack(weather_data, dim=0)
                 if len(item.keys) > 1:
                     tensor, scaler = self.collate_weather_elem(
                         weather_data,
