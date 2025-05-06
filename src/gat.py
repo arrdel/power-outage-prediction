@@ -69,6 +69,7 @@ class PFGAT(nn.Module):
 
         # 2) concatenate along feature‐axis → (B, T, N, total_in)
         x = torch.cat([x_hist, x_cov], dim=-1)
+        
 
         # 3) ST‐transformer → (B, N, hidden_channels)
         x = self.encoder(x)

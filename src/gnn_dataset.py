@@ -1,29 +1,30 @@
-from typing import Optional, Union, List, Tuple
-import xarray as xr
+import copy
+import warnings
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
+
+import geopandas as gpd
 import numpy as np
 import scipy.spatial
-import geopandas as gpd
-from pathlib import Path
-from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset
-from tsl.data import (
-SpatioTemporalDataModule)
+import torch
+import xarray as xr
+from einops import rearrange
 from tsl.data import (
     BatchMap,
     BatchMapItem,
+    SpatioTemporalDataModule,
     SynchMode,
 )
-import warnings
-from tsl.typing import DataArray
-
-
 from tsl.data.preprocessing.scalers import Scaler, ScalerModule
-
+from tsl.data.spatiotemporal_dataset import SpatioTemporalDataset
 from tsl.data.synch_mode import HORIZON, STATIC, WINDOW
-import torch
-import copy
-from einops import rearrange
+from tsl.typing import DataArray
+from tsl.utils import casting
+
 # Suppress UserWarnings
 warnings.filterwarnings("ignore", category=UserWarning)
+
+
 class Dummy:
     batch_pattern: str
     pattern: str
@@ -56,21 +57,20 @@ def mirror_point_at_360(ds: xr.Dataset) -> xr.Dataset:
     return xr.concat([ds, extra], dim="longitude")
 
 
-
 def build_triangulation(x, y):
-  grid = np.stack([x, y], axis=1)
-  return scipy.spatial.Delaunay(grid)
+    grid = np.stack([x, y], axis=1)
+    return scipy.spatial.Delaunay(grid)
 
 
 def interpolate(data, tri, mesh):
-  indices = tri.find_simplex(mesh)
-  ndim = tri.transform.shape[-1]
-  T_inv = tri.transform[indices, :ndim, :]
-  r = tri.transform[indices, ndim, :]
-  c = np.einsum('...ij,...j', T_inv, mesh - r)
-  c = np.concatenate([c, 1 - c.sum(axis=-1, keepdims=True)], axis=-1)
-  result = np.einsum('...i,...i', data[:, tri.simplices[indices]], c)
-  return np.where(indices == -1, np.nan, result)
+    indices = tri.find_simplex(mesh)
+    ndim = tri.transform.shape[-1]
+    T_inv = tri.transform[indices, :ndim, :]
+    r = tri.transform[indices, ndim, :]
+    c = np.einsum("...ij,...j", T_inv, mesh - r)
+    c = np.concatenate([c, 1 - c.sum(axis=-1, keepdims=True)], axis=-1)
+    result = np.einsum("...i,...i", data[:, tri.simplices[indices]], c)
+    return np.where(indices == -1, np.nan, result)
 
 
 class ERA5Dataset(SpatioTemporalDataset):
@@ -103,7 +103,7 @@ class ERA5Dataset(SpatioTemporalDataset):
             horizon=horizon,
             delay=delay,
             stride=stride,
-            **kwargs
+            **kwargs,
         )
         self.weather_zarr_url = weather_zarr_url
         self.storage_options = storage_options or {"token": "anon"}
@@ -117,10 +117,14 @@ class ERA5Dataset(SpatioTemporalDataset):
         # Rename fips2idx index to match GEOID
         fips2idx.index.name = "GEOID"
         # Reorder counties to match the order of fips2idx.index
-        self.counties = self.counties.set_index("GEOID").loc[fips2idx.index].reset_index()
+        self.counties = (
+            self.counties.set_index("GEOID").loc[fips2idx.index].reset_index()
+        )
 
         # Verify the reordering
-        assert all(self.counties["GEOID"].values == fips2idx.index.values), "Reordering failed: GEOID order mismatch"
+        assert all(self.counties["GEOID"].values == fips2idx.index.values), (
+            "Reordering failed: GEOID order mismatch"
+        )
         self.county_centroids = np.array(
             [[lon_to_360(pt.x), pt.y] for pt in self.counties.centroid]
         )
@@ -134,12 +138,14 @@ class ERA5Dataset(SpatioTemporalDataset):
         )
         assert self.index is not None
         self.ds = ds.sel(time=slice(self.index.min().date(), self.index.max().date()))
-        ds0 = self.ds.isel(time=slice(0,1)).compute()
+        ds0 = self.ds.isel(time=slice(0, 1)).compute()
         # print("selecting region")
-        US_ds=ds0.where(
-            (ds0.longitude > lon_to_360(-171.79)) & (ds0.latitude > 18.91) &
-            (ds0.longitude < lon_to_360(-66.96)) & (ds0.latitude < 71.35),
-            drop=True
+        US_ds = ds0.where(
+            (ds0.longitude > lon_to_360(-171.79))
+            & (ds0.latitude > 18.91)
+            & (ds0.longitude < lon_to_360(-66.96))
+            & (ds0.latitude < 71.35),
+            drop=True,
         )
         # print("Buiding triangulation")
         self.grid_tri = build_triangulation(
@@ -198,7 +204,6 @@ class ERA5Dataset(SpatioTemporalDataset):
 
         ds_w = self.ds.isel(time=time_index).compute()
         cov = torch.tensor(self._interpolate(ds_w))
-        
 
         return cov
 
@@ -218,7 +223,7 @@ class ERA5Dataset(SpatioTemporalDataset):
             # print(f"Interpolating {var}")
             interpolated_data.append(interpolate(ds[var].values, tri, centroid_coords))
         return torch.tensor(interpolated_data)
- 
+
     def _add_to_sample(
         self, out, synch_mode, endpoint="input", time_index=None, node_index=None
     ):
@@ -229,9 +234,18 @@ class ERA5Dataset(SpatioTemporalDataset):
                 time_flat = time_index.flatten()
                 weather_data = self.get_time_slice(time_flat)
                 if time_index.ndim != 1:
-                    weather_data = rearrange(weather_data, "f (b t) n -> b t n f", b=time_index.shape[0], t=time_index.shape[1])
+                    weather_data = rearrange(
+                        weather_data,
+                        "f (b t) n -> b t n f",
+                        b=time_index.shape[0],
+                        t=time_index.shape[1],
+                    )
                 else:
                     weather_data = rearrange(weather_data, "f t n -> t n f")
+                weather_data = casting.convert_precision_tensor(
+                        weather_data, self.precision
+                    )
+
                 # weather_data = []
                 # for time_idx in time_index:
                 #     weather_data.append()
@@ -292,8 +306,9 @@ class ERA5Dataset(SpatioTemporalDataset):
 
 
 if __name__ == "__main__":
-    from src.utils import get_adj_matrix
     from pathlib import Path
+
+    from src.utils import get_adj_matrix
 
     data_path = Path(__file__).parent.parent / "data" / "geographic"
 

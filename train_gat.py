@@ -33,6 +33,7 @@ dataset = ERA5Dataset(
     county_shapefile=data_path / "cb_2018_us_county_500k.shp",
     window=12,
     horizon=1,
+    precision="full",
 )
 
 dm = SpatioTemporalDataModule(
