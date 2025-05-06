@@ -3,6 +3,7 @@ import warnings
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
+import dask
 import geopandas as gpd
 import numpy as np
 import scipy.spatial
@@ -23,6 +24,7 @@ from tsl.utils import casting
 
 # Suppress UserWarnings
 warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 class Dummy:
@@ -201,9 +203,15 @@ class ERA5Dataset(SpatioTemporalDataset):
         Returns two xarray Datasets: covariates (vars × time × county) and targets.
         """
         # weather -> interpolate to counties
-
-        ds_w = self.ds.isel(time=time_index).compute()
-        cov = torch.tensor(self._interpolate(ds_w))
+        with dask.config.set(scheduler="synchronous"):
+            ds = xr.open_zarr(
+                self.weather_zarr_url,
+                storage_options=self.storage_options,
+                chunks={"time": self.window},  # type:ignore
+                consolidated=True,
+            )
+            ds_w = ds.isel(time=time_index).compute()
+            cov = torch.tensor(self._interpolate(ds_w))
 
         return cov
 
@@ -243,8 +251,8 @@ class ERA5Dataset(SpatioTemporalDataset):
                 else:
                     weather_data = rearrange(weather_data, "f t n -> t n f")
                 weather_data = casting.convert_precision_tensor(
-                        weather_data, self.precision
-                    )
+                    weather_data, self.precision
+                )
 
                 # weather_data = []
                 # for time_idx in time_index:
