@@ -13,7 +13,7 @@ from tsl.data import (
     BatchMapItem,
     SynchMode,
 )
-
+import warnings
 from tsl.typing import DataArray, IndexSlice, SparseTensArray, TemporalIndex, TensArray
 
 
@@ -21,8 +21,9 @@ from tsl.data.preprocessing.scalers import Scaler, ScalerModule
 
 from tsl.data.synch_mode import HORIZON, STATIC, WINDOW
 import torch
-
-
+import copy
+# Suppress UserWarnings
+warnings.filterwarnings("ignore", category=UserWarning)
 class Dummy:
     batch_pattern: str
     pattern: str
@@ -83,6 +84,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         target,
         covariates,
         connectivity,
+        fips2idx,
         weather_zarr_url: str,
         county_shapefile: Path | str,
         window: int,
@@ -107,6 +109,21 @@ class ERA5Dataset(SpatioTemporalDataset):
         # load county geometries and centroids
         self.counties = gpd.read_file(county_shapefile)
         self.counties["centroid"] = self.counties.geometry.centroid
+        self.counties["GEOID"] = self.counties["GEOID"].astype(fips2idx.index.dtype)
+        county_mask = self.counties["GEOID"].isin(fips2idx.index)
+        self.counties = self.counties[county_mask]
+        # Rename fips2idx index to match GEOID
+        fips2idx.index.name = "GEOID"
+        # pre_reorder = copy.deepcopy(self.counties)
+        # Reorder counties to match the order of fips2idx.index
+        self.counties = self.counties.set_index("GEOID").loc[fips2idx.index].reset_index()
+
+        # Verify the reordering
+        assert all(self.counties["GEOID"].values == fips2idx.index.values), "Reordering failed: GEOID order mismatch"
+        # for i, geoid in enumerate(fips2idx.index):
+        #     assert self.counties.loc[self.counties["GEOID"] == geoid].equals(
+        #     pre_reorder.loc[pre_reorder["GEOID"] == geoid]
+        #     ), f"Row mismatch after {i} iterations for GEOID {geoid}, \n {self.counties.loc[self.counties["GEOID"] == geoid]} != \n\t {pre_reorder.loc[pre_reorder["GEOID"] == geoid]}"
         self.county_centroids = np.array(
             [[lon_to_360(pt.x), pt.y] for pt in self.counties.centroid]
         )
@@ -273,11 +290,12 @@ if __name__ == "__main__":
 
     data_path = Path(__file__).parent.parent / "data" / "geographic"
 
-    adj_mat, target_mapped = get_adj_matrix()
+    adj_mat, target_mapped, fips2idx = get_adj_matrix()
     dataset = ERA5Dataset(
         target_mapped.resample("1h").median(),
         covariates=None,
         connectivity=adj_mat,
+        fips2idx=fips2idx,
         weather_zarr_url="gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
         county_shapefile=data_path / "cb_2018_us_county_500k.shp",
         window=12,
