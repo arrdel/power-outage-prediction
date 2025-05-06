@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Literal, Optional
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 import pytorch_lightning as pl
 import torch
@@ -16,7 +17,6 @@ from src.gat import PFGAT
 from src.gnn_dataset import ERA5Dataset
 from src.utils import get_adj_matrix
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import dask
 dask.config.set(scheduler='synchronous')  # Do this in __getitem__
 # from pytorch_lightning.loggers import TensorBoardLogger
