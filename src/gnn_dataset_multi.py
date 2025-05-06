@@ -75,7 +75,7 @@ def interpolate(data, tri, mesh):
     return np.where(indices == -1, np.nan, result)
 
 
-class ERA5Dataset(SpatioTemporalDataset):
+class MultiERA5Dataset(SpatioTemporalDataset):
     """
     SpatioTemporalDataset for ERA5 weather data + power outage targets at county level.
     Data lives in GCS Zarr stores and is loaded lazily per time slice.
@@ -139,8 +139,8 @@ class ERA5Dataset(SpatioTemporalDataset):
             consolidated=True,
         )
         assert self.index is not None
-        self.ds = ds.sel(time=slice(self.index.min().date(), self.index.max().date()))
-        ds0 = self.ds.isel(time=slice(0, 1)).compute()
+        ds =  ds.sel(time=slice(self.index.min().date(), self.index.max().date()))
+        ds0 = ds.isel(time=slice(0, 1)).compute()
         # print("selecting region")
         US_ds = ds0.where(
             (ds0.longitude > lon_to_360(-171.79))
@@ -203,8 +203,20 @@ class ERA5Dataset(SpatioTemporalDataset):
         Returns two xarray Datasets: covariates (vars × time × county) and targets.
         """
         # weather -> interpolate to counties
-        ds_w = self.ds.isel(time=time_index).compute()
-        cov = torch.tensor(self._interpolate(ds_w))
+        with dask.config.set(scheduler="synchronous"):
+            ds = xr.open_zarr(
+                self.weather_zarr_url,
+                storage_options=self.storage_options,
+                chunks={"time": self.window},  # type:ignore
+                consolidated=True,
+            )
+            
+            ds_w = ds.isel(time=time_index).compute()
+            print("Are there nans in ds?", bool(ds.isnull().sum()))
+            
+            
+            cov = torch.tensor(self._interpolate(ds_w))
+
         return cov
 
     def _interpolate(self, ds: xr.Dataset) -> xr.Dataset:
@@ -313,7 +325,7 @@ if __name__ == "__main__":
     data_path = Path(__file__).parent.parent / "data" / "geographic"
 
     adj_mat, target_mapped, fips2idx = get_adj_matrix()
-    dataset = ERA5Dataset(
+    dataset = MultiERA5Dataset(
         target_mapped.resample("1h").median(),
         covariates=None,
         connectivity=adj_mat,
