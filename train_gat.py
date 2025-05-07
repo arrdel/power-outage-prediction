@@ -18,7 +18,13 @@ from src.gnn_dataset import ERA5Dataset
 from src.utils import get_adj_matrix
 
 import dask
-dask.config.set(scheduler='synchronous')  # Do this in __getitem__
+
+import fsspec
+try:
+  fs = fsspec.filesystem('gs')
+except KeyError:
+  pass
+# dask.config.set(scheduler='synchronous')  # Do this in __getitem__
 # from pytorch_lightning.loggers import TensorBoardLogger
 data_path = Path(__file__).parent / "data" / "geographic"
 # Normalize data using mean and std computed over time and node dimensions
@@ -34,7 +40,8 @@ dataset = ERA5Dataset(
     covariates=None,
     connectivity=adj_mat,
     fips2idx=fips2idx,
-    weather_zarr_url="gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+    # weather_zarr_url="gs://gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+    weather_zarr_url="/media/drive2/jaydenfassett/era5_subset_2022.zarr",
     county_shapefile=data_path / "cb_2018_us_county_500k.shp",
     window=12,
     horizon=1,
@@ -81,9 +88,9 @@ dm = ERA5DataModule(
     dataset=dataset,
     scalers=scalers,
     splitter=splitter,
-    batch_size=2,
-    workers=12,
-    prefetch_factor=3,
+    batch_size=8,
+    # workers=12,
+    prefetch_factor=None,
 )
 
 
