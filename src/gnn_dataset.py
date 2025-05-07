@@ -134,7 +134,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         # build triangulation over weather grid (using first timestep)
         ds = xr.open_zarr(
             self.weather_zarr_url,
-            storage_options=self.storage_options,
+            # storage_options=self.storage_options,
             chunks={"time": window},  # type:ignore
             consolidated=True,
         )
@@ -204,7 +204,7 @@ class ERA5Dataset(SpatioTemporalDataset):
         """
         # weather -> interpolate to counties
         ds_w = self.ds.isel(time=time_index).compute()
-        cov = torch.tensor(self._interpolate(ds_w))
+        cov = torch.tensor(self._interpolate(ds_w)).nan_to_num(0,0,0)
         return cov
 
     def _interpolate(self, ds: xr.Dataset) -> xr.Dataset:
