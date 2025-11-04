@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <!-- Meta tags for social media banners -->
   <meta name="description"
-    content="Predicting Hospital Readmission Risk from Electronic Health Records: A Comparative Study of Classical and Ensemble Models. A comprehensive analysis using Logistic Regression, MLP, and XGBoost on the Diabetes 130-US Hospitals dataset.">
-  <meta property="og:title" content="Hospital Readmission Prediction - GSU Data Mining Project" />
+    content="GraPO: Predicting Power Outages During Extreme Weather Events Using Graph-Based Methods. A spatial-temporal graph neural network approach for county-level power outage prediction using ERA5 climate data, EAGLE-I outage records, and power grid topology.">
+  <meta property="og:title" content="GraPO - Power Outage Prediction | GSU Research Project" />
   <meta property="og:description"
-    content="A comparative study of machine learning models for predicting 30-day hospital readmissions using EHR data." />
-  <meta property="og:url" content="https://github.com/arrdel/pat  <footer class=" footer">
+    content="A novel graph neural network approach for predicting power outages during extreme weather events at the county level." />
+  <meta property="og:url" content="https://github.com/arrdel/power-outage-prediction" />
 
   <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
-  <meta property="og:image" content="static/images/teaser.png" />
+  <meta property="og:image" content="static/images/power_grid.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
 
-  <meta name="twitter:title" content="Hospital Readmission Prediction - GSU Data Mining Project">
+  <meta name="twitter:title" content="GraPO - Power Outage Prediction | GSU Research Project">
   <meta name="twitter:description"
-    content="A comparative study of machine learning models for predicting 30-day hospital readmissions using EHR data.">
+    content="A novel graph neural network approach for predicting power outages during extreme weather events at the county level.">
   <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
-  <meta name="twitter:image" content="static/images/teaser.png">
+  <meta name="twitter:image" content="static/images/power_grid.png">
   <meta name="twitter:card" content="summary_large_image">
   <!-- Keywords for your paper to be indexed by-->
   <meta name="keywords"
-    content="hospital readmission, machine learning, XGBoost, logistic regression, MLP, healthcare analytics, EHR, SMOTE, predictive modeling, data mining">
+    content="power outage prediction, graph neural networks, GNN, spatial-temporal modeling, extreme weather, ERA5, EAGLE-I, graph convolutional networks, graph attention networks, climate data, infrastructure prediction">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-  <title>Hospital Readmission Prediction | GSU Data Mining Project</title>
+  <title>GraPO: Power Outage Prediction | GSU Research Project</title>
   <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
 
@@ -47,6 +47,19 @@
   <script src="static/js/index.js"></script>
 
   <!-- MathJax for rendering LaTeX equations -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -107,6 +120,40 @@
       margin-top: 2rem;
       margin-bottom: 1rem;
     }
+
+    /* Math equation styling */
+    .MathJax {
+      font-size: 1.1em !important;
+    }
+
+    mjx-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    /* Subsection styling */
+    .subsection-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #363636;
+    }
+
+    /* Data section styling */
+    .data-list {
+      margin-left: 1.5rem;
+    }
+
+    .data-list li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Performance metrics */
+    .metric-highlight {
+      font-weight: 600;
+      color: #3273dc;
+    }
   </style>
 </head>
 
@@ -118,52 +165,40 @@
       <div class="container is-max-desktop">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <h1 class="title is-1 publication-title">GraPO - Predicting Power Outages During Extreme Weather Events
-              Using Graph-Based Method</h1>
+            <h1 class="title is-1 publication-title">GraPO: Predicting Power Outages During Extreme Weather Events
+              Using Graph-Based Methods</h1>
             <div class="is-size-5 publication-authors">
               <!-- Paper authors -->
               <span class="author-block">
-                <a href="https://github.com/tanvirhossain" target="_blank">Adele Chinda,</a></span>
+                <a href="https://github.com/arrdel" target="_blank">Adele Chinda</a><sup></sup>,</span>
               <span class="author-block">
-                <a href="https://github.com/hrchai" target="_blank">Huirong Chai, </a></span>
+                <a href="https://github.com/hrchai" target="_blank">Huirong Chai</a><sup></sup>,</span>
               <span class="author-block">
-                <a href="https://github.com/jamorr" target="_blank">Jack Morris, </a></span>
+                <a href="https://github.com/jamorr" target="_blank">Jack Morris</a><sup></sup>,</span>
               <span class="author-block">
-                <a href="https://github.com/jfassett1" target="_blank">Jayden Fassett </a></span>
+                <a href="https://github.com/jfassett1" target="_blank">Jayden Fassett</a><sup></sup></span>
             </div>
 
             <div class="is-size-5 publication-authors">
-              <span class="author-block">Georgia State University<br></span>
-              <!-- <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span> -->
+              <span class="author-block">Department of Computer Science<br>Georgia State University<br>2025</span>
             </div>
 
             <div class="column has-text-centered">
               <div class="publication-links">
-                <!-- Arxiv PDF link -->
+                <!-- PDF link -->
                 <span class="link-block">
-                  <a href="https://github.com/arrdel/patient-readmission-prediction/blob/master/report/submission.pdf"
+                  <a href="https://github.com/arrdel/power-outage-prediction/blob/master/report/GraPO.pdf"
                     target="_blank" class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
                       <i class="fas fa-file-pdf"></i>
                     </span>
-                    <span>Report</span>
+                    <span>Paper</span>
                   </a>
                 </span>
 
-                <!-- Supplementary PDF link
-                <span class="link-block">
-                  <a href="static/pdfs/supplementary_material.pdf" target="_blank"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                    </span>
-                    <span>Supplementary</span>
-                  </a>
-                </span> -->
-
                 <!-- Github link -->
                 <span class="link-block">
-                  <a href="https://github.com/arrdel/patient-readmission-prediction" target="_blank"
+                  <a href="https://github.com/arrdel/power-outage-prediction" target="_blank"
                     class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
                       <i class="fab fa-github"></i>
@@ -172,16 +207,16 @@
                   </a>
                 </span>
 
-                <!-- ArXiv abstract Link -->
-                <!-- <span class="link-block">
-                  <a href="https://arxiv.org/abs/<ARXIV PAPER ID>" target="_blank"
+                <!-- Dataset link -->
+                <span class="link-block">
+                  <a href="https://eagle-i.doe.gov" target="_blank"
                     class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
-                      <i class="ai ai-arxiv"></i>
+                      <i class="fas fa-database"></i>
                     </span>
-                    <span>arXiv</span>
+                    <span>EAGLE-I Data</span>
                   </a>
-                </span> -->
+                </span>
               </div>
             </div>
           </div>
@@ -212,11 +247,9 @@
   <section class="hero teaser">
     <div class="container is-max-desktop">
       <div class="hero-body">
-        <img src="static/images/teaser.png" alt="Hospital Readmission Prediction Project Overview"
-          style="width:100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+        <img src="static/images/power_grid.png" alt="Power Grid Network Visualization" style="width:100%" />
         <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
-          A comprehensive machine learning pipeline for predicting 30-day hospital readmissions using the Diabetes
-          130-US Hospitals dataset.
+          Spatial graph representation of US power grid with county-level nodes and transmission line connectivity
         </h2>
       </div>
     </div>
@@ -231,22 +264,22 @@
           <h2 class="title is-3">Abstract</h2>
           <div class="content has-text-justified">
             <p>
-              We present a complete, reproducible pipeline and empirical study for predicting hospital readmission
-              within 30 days
-              using the Diabetes 130-US Hospitals dataset. Our work
-              focuses on practical preprocessing, robust imbalance handling, and a direct comparison of interpretable
-              models (logistic
-              regression), parametric neural models (multilayer perceptrons, MLP), and tree-ensemble approaches
-              (XGBoost). The pipeline includes end-to-end engineering steps
-              such as feature
-              cleaning, encoding, scaling, oversampling via SMOTE, and feature selection using
-              gradient-boosted
-              gain scores. We evaluate models extensively through ROC and PR curves, loss curves, feature importance
-              analyses,
-              confusion matrices, and threshold tuning. We report empirical performance, highlight trade-offs between
-              interpretability
-              and predictive power, and discuss next steps involving temporal modeling,
-              calibration, and causal evaluation.
+              Predicting power outages in advance is critical for enhancing public safety, expediting emergency
+              response, reducing economic losses, and minimizing damage to electrical infrastructure. During natural
+              disasters and extreme weather events, power systems face elevated risks, making accurate and timely
+              predictions essential. This paper introduces <strong>GraPO</strong>, a novel spatial-temporal graph
+              neural network (GNN) approach designed to predict county-level power outage risk and severity during
+              and after extreme weather events. We construct a spatial graph where each U.S. county is represented
+              as a node, and edges encode the topology of the national electric transmission network based on publicly
+              available datasets. GraPO integrates a rich set of node features derived from historical outage records
+              (EAGLE-I), real-time and forecasted climate data (ERA5), severe weather alerts (NWS VTEC), and
+              county-level socio-demographic attributes. By embedding spatial-temporal dynamics through weather event
+              sequences and grid connectivity, GraPO models how outage risks propagate across the network. We evaluate
+              the model using three years of historical data covering multiple storm, heatwave, and dark calm events.
+              Results show that GraPO consistently outperforms traditional machine learning baselines, providing earlier
+              and more accurate outage risk predictions. We also discuss practical implications, limitations related to
+              data sparsity in rural regions, and future directions for improving predictive robustness and real-time
+              deployment.
             </p>
           </div>
         </div>
@@ -255,7 +288,7 @@
   </section>
   <!-- End paper abstract -->
 
-  <!-- Related Links -->
+  <!-- Introduction -->
   <section class="section hero">
     <div class="container is-max-desktop">
       <div class="columns is-centered">
@@ -264,28 +297,111 @@
 
           <div class="content has-text-justified">
             <p>
-              Hospital readmission prediction is a longstanding operational and clinical challenge. Identifying patients
-              at elevated
-              risk allows clinicians to intervene and potentially reduce both unnecessary hospitalizations and
-              associated healthcare
-              costs. Electronic Health Records (EHRs) provide a rich but heterogeneous representation of patients’
-              clinical histories,
-              encompassing demographics, admission metadata, procedures, medications, and laboratory results. However,
-              prediction from
-              EHR data is complicated by missing values, noisy and high-cardinality diagnosis codes, and substantial
-              class imbalance
-              in short-term readmission events.
+              Power outages significantly impact economic stability, critical infrastructure integrity, public safety,
+              and the overall quality of life. Annually, these disruptions result in billions of dollars in economic
+              losses, infrastructure damages, and increased risks to public welfare. Severe weather events such as
+              hurricanes, floods, and thunderstorms are frequent causes of power outages, often overwhelming
+              traditional forecasting methods that rely heavily on historical outage data and simplistic statistical
+              relationships. The complexity and interconnectedness of modern power grids, coupled with the
+              escalating frequency of extreme weather due to climate change, underscore the urgent need for
+              advanced predictive capabilities to anticipate and mitigate power outages.
+            </p>
 
-              In this study, we develop a reproducible pipeline for predicting 30-day hospital readmissions. We evaluate
-              three
-              modeling paradigms: logistic regression as a linear baseline, a feedforward neural network (MLP)
-              representing nonlinear
-              parametric methods, and gradient-boosted trees (XGBoost) as a strong ensemble learner for
-              structured data. Our contributions are: (i) a fully engineered preprocessing pipeline tailored
-              for EHRs, (ii) a comparative experimental evaluation of classical and ensemble models, and (iii) a
-              discussion of
-              interpretability, operational trade-offs, and future directions.
+            <p>
+              Traditional prediction methods, including statistical modeling and classical machine learning algorithms
+              such as random forests and gradient boosting, have provided useful but limited insights. These methods
+              typically neglect essential spatial dependencies and temporal dynamics intrinsic to power grids, leading
+              to limited predictive accuracy and limited actionable insights.
+            </p>
 
+            <p>
+              <strong>Graph neural networks (GNNs)</strong> offer promising solutions by explicitly modeling
+              relationships and interactions across networked data structures. GNNs excel in capturing intricate
+              patterns across interconnected nodes, making them highly suitable for spatially and temporally structured
+              data. Spatial-temporal graph neural networks (ST-GNNs), in particular, have demonstrated significant
+              efficacy in various applications including traffic prediction, infrastructure monitoring, and energy
+              management.
+            </p>
+
+            <p>
+              To address the critical gaps in existing methodologies, this study proposes <strong>GraPO</strong>, a
+              sophisticated GNN-based model specifically designed to predict the locations and severities of power
+              outages approximately <strong>12 hours in advance</strong>. Our approach integrates multiple,
+              heterogeneous datasets including comprehensive climate data (ERA5), detailed US power grid topology,
+              historical power outage occurrences (EAGLE-I), and real-time weather alerts from the National Weather
+              Service (NWS VTEC archives). The resulting predictive model offers a strategic advantage to utility
+              companies, emergency response organizations, and policymakers by providing early and accurate predictions,
+              allowing for proactive and effective management of resources and responses.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Section -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Data Sources</h2>
+
+          <div class="content has-text-justified">
+            <h3 class="subsection-title">EAGLE-I Outage Data</h3>
+            <p>
+              We utilize county-level outage counts from the <strong>EAGLE-I™ (Environment for Analysis of
+                Geo-Located Energy Information)</strong> dataset maintained by Oak Ridge National Laboratory. This
+              dataset provides comprehensive power outage information across the United States from 2014 to 2023,
+              containing information on the number of customers without power every 15 minutes at the county level.
+              Each model's input features comprise: (1) the maximum number of county outages over the 12-hour period
+              preceding each weather alert issuance; (2) the categorical weather alert type; and (3) the list of
+              counties impacted by the alert.
+            </p>
+
+            <h3 class="subsection-title">ERA5 Climate Reanalysis Data</h3>
+            <p>
+              We use the <strong>ERA5 Single Level Reanalysis</strong> dataset, hosted by the Google Cloud Public
+              Datasets program via the <code>arco-era5</code> archive. This dataset provides hourly global weather
+              reanalysis fields produced by ECMWF on a native N320 reduced Gaussian grid (~25 km resolution).
+            </p>
+            <p>
+              Our analysis focuses on a single calendar year (2022), which includes 8,760 hourly timesteps. We
+              partition the data chronologically, using the first 70% (January 1 to September) for training, 10% for
+              validation, and the remaining 20% for testing. This split preserves temporal coherence and reflects
+              realistic forecasting conditions.
+            </p>
+            <p>
+              The dataset includes a wide range of atmospheric and surface variables:
+            </p>
+            <ul class="data-list">
+              <li><strong>Surface meteorology:</strong> 2-meter temperature, dewpoint, surface pressure, mean sea
+                level pressure</li>
+              <li><strong>Wind components:</strong> at 10m and 100m height</li>
+              <li><strong>Cloud cover:</strong> low, medium, high, and total cloud cover</li>
+              <li><strong>Water and energy fluxes:</strong> total column water vapor, cloud liquid water, convective
+                available potential energy (CAPE)</li>
+              <li><strong>Soil and snow fields:</strong> soil temperature and moisture (layers 1-4), snow temperature
+              </li>
+              <li><strong>Sea state:</strong> sea surface temperature, sea ice fraction</li>
+            </ul>
+
+            <h3 class="subsection-title">County-Level Spatial Data</h3>
+            <p>
+              To produce county-level weather data, we use the <strong>US Census Bureau boundary files</strong> for
+              each US county. We compute the centroid of each county using an average of all sides of the polygon's
+              coordinates weighted by side length. To convert the ERA5 weather data from a grid to county-level data,
+              we use <strong>Delaunay triangulation</strong>, the dual of Voronoi tessellation, to get a set of
+              triangular surfaces with ERA5 grid points making up the vertices. For each county centroid, we find
+              which surface it falls upon then use the weather data corresponding to the vertices of the triangle to
+              interpolate a value for that county.
+            </p>
+
+            <h3 class="subsection-title">Power Grid Topology</h3>
+            <p>
+              We leverage the <strong>US Power Transmission Line Dataset</strong> from the Department of Energy,
+              which provides precise geographic start and end points for transmission lines across the United States.
+              Each power line segment is geographically mapped to the counties it traverses, enabling us to construct
+              a graph where edges represent physical electrical connections between counties.
             </p>
           </div>
         </div>
@@ -294,419 +410,258 @@
   </section>
 
 
-
-
+  <!-- Methodology Section -->
   <section class="section hero">
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column is-full-width">
-          <h2 class="title is-3">Methods</h2>
+          <h2 class="title is-3">Methodology</h2>
 
           <div class="content has-text-justified">
             <p>
-              We compare three supervised learning paradigms that represent distinct modeling philosophies: (i)
-              <em>logistic regression</em> as a linear and interpretable baseline, (ii) <em>multilayer perceptron
-                (MLP)</em> as a flexible
-              parametric neural network, and (iii) <em>XGBoost</em>, a non-parametric ensemble tree-boosting approach.
-              This
-              combination allows us to explore the trade-offs between interpretability, nonlinearity, and predictive
-              performance in the
-              context of healthcare readmission prediction.
+              Our approach, <strong>GraPO</strong>, integrates spatial-temporal graph neural networks (GNNs) to
+              predict power outage locations and severities approximately 12 hours in advance. The methodology
+              consists of four key components: graph construction, node embedding initialization, model architecture
+              design, and model training and evaluation.
             </p>
 
-            <h3 class="title is-4">Logistic Regression</h3>
+            <h3 class="subsection-title">Graph Construction</h3>
             <p>
-              Logistic regression (LogReg) is a generalized linear model that maps input features to a probability of
-              readmission through a logit link function. It estimates the conditional probability of the positive class
-              as:
-            </p>
-            <p>
-              $$P(Y=1 \mid x) = \sigma(w^\top x + b),$$
-            </p>
-            <p>
-              where \(\sigma(z) = \frac{1}{1+e^{-z}}\) is the sigmoid activation, \(w\) denotes the coefficient vector,
-              and
-              \(b\) is the intercept.
-            </p>
-            <p>
-              The model is trained by minimizing the regularized binary cross-entropy loss:
-            </p>
-            <p>
-              $$\mathcal{L}_{\text{logreg}} = - \frac{1}{N}\sum_{i=1}^N \left[ y_i \log \hat{y}_i +
-              (1-y_i)\log(1-\hat{y}_i)\right] + \lambda \|w\|_2^2,$$
-            </p>
-            <p>
-              where \(\lambda\) controls the strength of L2 regularization to prevent overfitting.
-            </p>
-            <p>
-              Logistic regression was chosen as a baseline due to its transparency: coefficients \(w_j\) can be directly
-              interpreted as log-odds ratios, providing clinicians with an intuitive explanation of how individual risk
-              factors
-              contribute to readmission probability.
+              The foundational step in our methodology is the detailed construction of a spatially explicit graph
+              representing all US counties, interconnected through transmission lines. To create this structure, we
+              leverage the US Power Transmission Line Dataset, which provides precise geographic start and end points
+              for transmission lines. Each power line segment is geographically mapped to the counties it traverses.
+              Edges between county nodes in the resulting graph are established where transmission lines directly
+              connect counties. Additionally, each edge is assigned a weight corresponding to the voltage level of its
+              associated power line, effectively capturing varying strengths of connectivity within the power grid.
+              This graph structure embodies the intricate interdependencies inherent in electrical infrastructure and
+              serves as a spatial foundation for predictive modeling.
             </p>
 
-            <h3 class="title is-4">Multilayer Perceptron</h3>
+            <h3 class="subsection-title">Node Embeddings Initialization</h3>
             <p>
-              To capture nonlinear dependencies that linear models cannot, we implemented a feedforward multilayer
-              perceptron (MLP). The MLP applies successive affine transformations followed by nonlinear activations:
+              Each node in the graph corresponds to a US county and is initialized with rich, multi-source embeddings
+              to effectively capture both static and dynamic county-level characteristics. We aggregate climate
+              features from the ERA5 dataset, which includes critical weather parameters such as temperature, wind
+              speed, and precipitation. This aggregation occurs by calculating each county's centroid and extracting
+              climate information from the four nearest ERA5 data points, thus providing robust local climatic
+              representations.
             </p>
             <p>
-              $$h_1 = \text{ReLU}(W_1x+b_1), \quad h_2 = \text{ReLU}(W_2h_1+b_2), \quad \hat{y} = \sigma(W_3h_2+b_3).$$
-            </p>
-            <p>
-              Here, \(h_1\) and \(h_2\) are hidden representations, \(\text{ReLU}(z) = \max(0,z)\) is the activation
-              function, and
-              the final output is squashed into \([0,1]\) using the sigmoid.
-            </p>
-            <p>
-              We employed two hidden layers of size 64 and 32, balancing model expressivity with computational
-              tractability. Training was performed using stochastic gradient descent with backpropagation and early
-              stopping, to avoid
-              overfitting in the presence of limited minority-class data. Unlike LogReg, MLPs are less interpretable,
-              but they allow
-              complex interactions between heterogeneous EHR features (e.g., nonlinear effects of age, comorbidity, and
-              prior visits) to be
-              modeled effectively.
+              Furthermore, we enrich these embeddings by incorporating static demographic and geographic features from
+              publicly available county datasets. Historical power outage information from the EAGLE-I dataset also
+              forms a critical part of each node's embedding, providing the temporal context necessary for prediction
+              tasks. Finally, we integrate event-specific weather advisories from the NWS Valid Time Extent Code
+              (VTEC) archives, dynamically capturing real-time alert data relevant to outage occurrences.
+              Collectively, these embeddings represent comprehensive county-specific features, essential for
+              accurately modeling complex outage dynamics.
             </p>
 
-            <h3 class="title is-4">XGBoost</h3>
+            <h3 class="subsection-title">Model Architecture</h3>
             <p>
-              XGBoost is a scalable and regularized gradient boosting algorithm for decision trees. It
-              constructs an additive model:
+              To explore the predictive performance and generalization capabilities of various GNN configurations, we
+              design and evaluate modeling approaches with varying architectures:
             </p>
+            <ul class="data-list">
+              <li><strong>Encoder:</strong> We compare a Temporal Transformer encoder to a simple feedforward network
+                used as a baseline.</li>
+              <li><strong>Graph Neural Network (GNN) Layer:</strong> We evaluate both Graph Convolutional Networks
+                (GCNs) and Graph Attention Networks (GATs). The GCN aggregates information uniformly from neighboring
+                nodes, whereas the GAT introduces learned attention coefficients to dynamically weight node
+                interactions.</li>
+            </ul>
             <p>
-              $$\hat{y}_i = \sum_{k=1}^K f_k(x_i), \quad f_k \in \mathcal{F},$$
+              In addition to the architectural components, we incorporate a learnable county-specific bias term to
+              capture static characteristics and persistent outage tendencies. The final model output is computed as:
             </p>
+            <div style="overflow-x: auto; margin: 1.5rem 0;">
+              $$
+              \hat{y}_{i,t+h} = \phi\left( \text{GNN} \left( \left\{\text{TemporalEncoder}\left(X_{t-w:t}^{(i)}\right) +
+              c^{(i)} \mid X_{t-w:t}^{(i)} \in \mathbf{X}, c^{(i)} \in C\right\}, \text{E} \right) \right)
+              $$
+            </div>
+            <p>where:</p>
+            <ul class="data-list">
+              <li>$\hat{y}_{i,t+h}$ is the predicted target value for county $i$ at forecast horizon $h$</li>
+              <li>$X_{t-w:t}^{(i)} \in \mathbf{X}$ denotes the input weather features for county $i$ over the
+                historical window $[t-w, t]$</li>
+              <li>$\text{E}$ is the edge list</li>
+              <li>$\text{TemporalEncoder}$ is the temporal transformer layer</li>
+              <li>$\text{GNN}$ is a spatial layer (GCN or GAT)</li>
+              <li>$\phi$ is the feedforward decoder</li>
+              <li>$c_i$ is a learnable county embedding vector for county $i$</li>
+            </ul>
+
+            <h3 class="subsection-title">Training Objective and Evaluation</h3>
             <p>
-              where \(\mathcal{F}\) is the space of regression trees, and \(K\) is the number of boosting rounds. Each
-              tree
-              \(f_k\) is trained to minimize the following regularized objective:
+              Our primary training objective is to minimize the root mean squared error (RMSE) between predicted and
+              actual customer outage counts per county, forecasting 12 hours in advance. Specifically, the RMSE loss
+              function, defined as:
             </p>
+            <div style="overflow-x: auto; margin: 1.5rem 0;">
+              $$
+              \text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^N (y_i - \hat{y_i})^2}
+              $$
+            </div>
             <p>
-              $$\mathcal{L} = \sum_{i=1}^N l(y_i, \hat{y}_i) + \sum_{k=1}^K \Omega(f_k),$$
-            </p>
-            <p>
-              with \(\Omega(f) = \gamma T + \tfrac{1}{2}\lambda \|w\|^2\) penalizing tree complexity through the number
-              of
-              leaves \(T\) and leaf weights \(w\).
-            </p>
-            <p>
-              By sequentially fitting trees to the residuals of previous models, XGBoost effectively captures nonlinear
-              feature interactions and hierarchical effects common in structured healthcare data. It also includes
-              built-in
-              handling of missing values and a class-weighting mechanism, making it well suited to clinical prediction
-              tasks with
-              imbalanced data.
+              quantitatively measures model predictive accuracy, where $y_i$ and $\hat{y_i}$ denote true and
+              predicted outage counts, respectively. To rigorously evaluate model performance, robustness, and
+              generalization capacity, we apply a 5-fold cross-validation strategy.
             </p>
 
-            <h3 class="title is-4">Imbalance Handling</h3>
+            <h3 class="subsection-title">Implementation Details</h3>
             <p>
-              The dataset exhibits severe imbalance: only about 11% of admissions correspond to a 30-day readmission
-              event. To address this, we employed the Synthetic Minority Over-sampling Technique (SMOTE), which
-              generates
-              synthetic minority-class samples via convex combinations of existing instances. For two minority samples
-              \(x_i\) and \(x_j\), a new synthetic point is created as:
-            </p>
-            <p>
-              $$x_{\text{new}} = x_i + \alpha (x_j - x_i), \quad \alpha \sim U(0,1).$$
-            </p>
-            <p>
-              This balances the training set, allowing classifiers to learn more robust decision boundaries. In
-              addition, for XGBoost we set the <code>scale_pos_weight</code> hyperparameter to:
-            </p>
-            <p>
-              $$\text{scale_pos_weight} = \frac{\#\{Y=0\}}{\#\{Y=1\}},$$
-            </p>
-            <p>
-              ensuring the loss function penalizes false negatives more heavily, thus improving sensitivity to
-              readmission cases.
+              Models are implemented using the <strong>PyTorch</strong> and <strong>PyTorch Geometric</strong>
+              frameworks, leveraging GPU acceleration via NVIDIA GTX 4090 for computationally intensive tasks.
+              Hyperparameter optimization is conducted using Bayesian methods, systematically tuning parameters such
+              as learning rate, number of hidden units, number of layers, and attention heads, selecting optimal
+              configurations based on validation performance. Training durations range from 2 to 8 hours, dependent
+              upon the complexity of each model architecture.
             </p>
           </div>
         </div>
       </div>
     </div>
   </section>
-
-
-
-
-  <section class="section hero">
+  <!-- Results Section -->
+  <section class="section hero is-light">
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column is-full-width">
-          <h2 class="title is-3">Results</h2>
+          <h2 class="title is-3">Results and Discussion</h2>
 
           <div class="content has-text-justified">
+            <h3 class="subsection-title">Baseline Performance</h3>
             <p>
-              The figure below shows ROC curves comparing Logistic Regression, Multilayer Perceptron (MLP), and
-              XGBoost on the held-out test set. Consistent with expectations for tabular EHR data, XGBoost achieved the
-              strongest
-              overall discriminative ability, yielding the highest ROC AUC (0.62) and PR AUC (0.42).
-            </p>
-
-            <!-- ROC Curve Figure -->
-            <figure class="image" style="margin: 2rem auto; max-width: 550px;">
-              <img src="static/images/models_comparison_roc.png" alt="ROC curves comparing models"
-                style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); image-rendering: crisp-edges;">
-              <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
-                <strong>Figure 1:</strong> ROC curves comparing Logistic Regression, MLP, and XGBoost on the test set.
-                XGBoost achieves the strongest discriminative performance (highest AUC).
-              </figcaption>
-            </figure>
-
-            <p>
-              The table below summarizes the primary evaluation metrics. Logistic Regression and MLP both
-              reached the highest F1 score (0.93), but their performance profiles differ: Logistic Regression favors
-              higher precision (0.89)
-              at slightly lower recall (0.97), whereas MLP achieves stronger recall (0.98) but without additional gain
-              in precision.
-              XGBoost, while superior in ROC/PR AUC, demonstrates a sharp trade-off, excelling in precision (0.93) but
-              with a
-              notably lower recall (0.40), leading to a reduced F1 score (0.56).
+              To benchmark GraPO's performance against established approaches, we adopt the same state-level machine
+              learning methods used by prior work. Specifically, we implement three widely-used regression models:
+              <strong>Random Forest (RF)</strong>, <strong>k-Nearest Neighbors (kNN)</strong>, and
+              <strong>Extreme Gradient Boosting (XGBoost)</strong>. Following the methodology from existing research,
+              we sort events chronologically and allocate the first 80% for training and the remaining 20% for testing.
             </p>
             <p>
-              These differences highlight that model choice depends not only on discriminative metrics such as AUC, but
-              also on operational trade-offs between sensitivity and specificity in deployment contexts.
+              Below are the baseline results predicting the number of affected customers 12 hours in advance at the
+              state level:
             </p>
 
-            <!-- Results Table -->
             <div style="overflow-x: auto; margin: 2rem 0;">
-              <table class="table is-bordered is-striped is-hoverable is-fullwidth"
-                style="margin: 0 auto; max-width: 800px;">
-                <caption
-                  style="caption-side: top; text-align: center; font-weight: bold; margin-bottom: 1rem; font-size: 1.1rem;">
-                  <strong>Table 1:</strong> Primary evaluation metrics on the 30-day readmission task.
-                </caption>
-                <thead style="background-color: #f5f5f5;">
+              <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
+                <thead>
                   <tr>
-                    <th style="text-align: left;">Model</th>
-                    <th style="text-align: center;">ROC AUC</th>
-                    <th style="text-align: center;">PR AUC</th>
-                    <th style="text-align: center;">Precision</th>
-                    <th style="text-align: center;">Recall</th>
-                    <th style="text-align: center;">F1</th>
+                    <th>State</th>
+                    <th>Data Size<br>(# of events)</th>
+                    <th>Random Forest<br>R² (RMSE)</th>
+                    <th>kNN<br>R² (RMSE)</th>
+                    <th>XGBoost<br>R² (RMSE)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td style="text-align: left;"><strong>Logistic Regression</strong></td>
-                    <td style="text-align: center;">0.56</td>
-                    <td style="text-align: center;">0.35</td>
-                    <td style="text-align: center;">0.89</td>
-                    <td style="text-align: center;">0.97</td>
-                    <td style="text-align: center;"><strong>0.93</strong></td>
+                    <td><strong>Texas</strong></td>
+                    <td>Large<br>(15,272)</td>
+                    <td>0.512<br>(6,692.8)</td>
+                    <td>0.346<br>(7,750.9)</td>
+                    <td>0.411<br>(7,356.0)</td>
                   </tr>
                   <tr>
-                    <td style="text-align: left;"><strong>MLP</strong></td>
-                    <td style="text-align: center;">0.59</td>
-                    <td style="text-align: center;">0.38</td>
-                    <td style="text-align: center;">0.89</td>
-                    <td style="text-align: center;"><strong>0.98</strong></td>
-                    <td style="text-align: center;"><strong>0.93</strong></td>
+                    <td><strong>Michigan</strong></td>
+                    <td>Medium<br>(2,162)</td>
+                    <td>0.502<br>(9,257.6)</td>
+                    <td>0.486<br>(9,396.8)</td>
+                    <td>0.438<br>(9,831.8)</td>
                   </tr>
                   <tr>
-                    <td style="text-align: left;"><strong>XGBoost</strong></td>
-                    <td style="text-align: center;"><strong>0.62</strong></td>
-                    <td style="text-align: center;"><strong>0.42</strong></td>
-                    <td style="text-align: center;"><strong>0.93</strong></td>
-                    <td style="text-align: center;">0.40</td>
-                    <td style="text-align: center;">0.56</td>
+                    <td><strong>Hawaii</strong></td>
+                    <td>Small<br>(658)</td>
+                    <td>0.185<br>(1,040.9)</td>
+                    <td>-0.000832<br>(1,154.1)</td>
+                    <td>0.0485<br>(1,125.2)</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <!-- Classification Reports -->
-            <h3 class="title is-4">Classification Reports</h3>
-            <p>The following figures show detailed classification reports for each model:</p>
-
-            <div class="columns is-multiline" style="margin-top: 2rem;">
-              <div class="column is-half">
-                <figure class="image">
-                  <img src="static/images/logistic_regression_classification_report.png"
-                    alt="Logistic Regression Classification Report"
-                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
-                    <strong>Figure 2:</strong> Classification report for Logistic Regression.
-                  </figcaption>
-                </figure>
-              </div>
-              <div class="column is-half">
-                <figure class="image">
-                  <img src="static/images/mlp_classifier_classification_report.png" alt="MLP Classification Report"
-                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
-                    <strong>Figure 3:</strong> Classification report for MLP.
-                  </figcaption>
-                </figure>
-              </div>
-            </div>
-
-            <div class="columns is-centered" style="margin-top: 1rem;">
-              <div class="column is-half">
-                <figure class="image">
-                  <img src="static/images/xgboost_classification_report.png" alt="XGBoost Classification Report"
-                    style="width: 100%; height: auto; image-rendering: crisp-edges;">
-                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
-                    <strong>Figure 4:</strong> Classification report for XGBoost.
-                  </figcaption>
-                </figure>
-              </div>
-            </div>
-
-            <!-- Additional Analysis -->
-            <h3 class="title is-4" style="margin-top: 3rem;">Model Interpretation and Feature Importance</h3>
+            <h3 class="subsection-title">GraPO Model Performance</h3>
             <p>
-              Beyond predictive performance, understanding which features drive readmission risk is crucial for clinical
-              decision-making. The figure below shows the top 30 most influential features from the logistic regression
-              model,
-              ranked by their coefficient magnitudes. These coefficients represent the log-odds contribution of each
-              feature
-              to the readmission probability.
-            </p>
-
-            <div class="columns is-centered" style="margin-top: 2rem; margin-bottom: 3rem;">
-              <div class="column is-three-quarters">
-                <figure class="image">
-                  <img src="static/images/logreg_top30_coefficients.png" alt="Top 30 Logistic Regression Coefficients"
-                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
-                    <strong>Figure 5:</strong> Top 30 feature coefficients from logistic regression, showing the most
-                    influential
-                    predictors of hospital readmission. Positive coefficients indicate increased readmission risk.
-                  </figcaption>
-                </figure>
-              </div>
-            </div>
-
-            <!-- Discussion Section -->
-            <h3 class="title is-4">Discussion</h3>
-            <p>
-              Our comparative analysis reveals important trade-offs in model selection for hospital readmission
-              prediction.
-              While XGBoost achieves superior discriminative performance (ROC AUC: 0.62), logistic regression and MLP
-              models
-              provide better balance between precision and recall (F1: 0.93). The choice of model should align with
-              deployment
-              priorities: if the goal is to identify high-risk patients for targeted interventions, XGBoost's higher
-              precision
-              may be preferable despite lower recall. Conversely, if the objective is to ensure no at-risk patients are
-              missed,
-              the higher recall of MLP models may be more appropriate.
+              Our proposed approach, <strong>GraPO</strong>, demonstrates promising potential for accurately predicting
+              power outages by effectively modeling spatial and temporal dynamics using graph neural networks. Unlike
+              traditional regression models that rely primarily on historical outage patterns and weather alerts, our
+              method explicitly incorporates the physical topology of the electrical grid and detailed climate data,
+              significantly enhancing predictive capabilities on a more granular task.
             </p>
             <p>
-              The SMOTE oversampling technique proved effective in addressing class imbalance, though future work could
-              explore
-              alternative approaches such as cost-sensitive learning or focal loss. Feature engineering and selection
-              significantly
-              impacted model performance, suggesting that domain expertise in identifying clinically relevant predictors
-              is as
-              important as algorithm choice.
+              While prior work has primarily focused on coarser, state-level prediction, our model is trained on a more
+              challenging task of forecasting outages at the <strong>county scale across the entire United
+                States</strong>.
+              Despite the increased granularity and complexity, GraPO achieves a strong RMSE of
+              <span class="metric-highlight">9,413.13</span>, demonstrating its ability to generalize across diverse
+              areas of the US. These results highlight the promise of graph-based learning in critical infrastructure
+              modeling, particularly that our derived features were informative enough to allow for high predictive
+              power.
             </p>
 
-            <!-- Future Work -->
-            <h3 class="title is-4">Future Directions</h3>
-            <p>
-              Several promising directions for future research include:
-            </p>
-            <ul style="margin-left: 2rem;">
-              <li><strong>Temporal Modeling:</strong> Incorporating time-series patterns and sequential patient
-                histories using
-                recurrent neural networks (RNNs) or transformers.</li>
-              <li><strong>Model Calibration:</strong> Ensuring predicted probabilities accurately reflect true
-                readmission risks
-                through calibration techniques like Platt scaling or isotonic regression.</li>
-              <li><strong>Causal Inference:</strong> Moving beyond correlation to identify causal relationships using
-                propensity
-                score matching or instrumental variables.</li>
-              <li><strong>Deployment Considerations:</strong> Addressing fairness across demographic groups, model
-                interpretability
-                for clinical staff, and integration with existing EHR systems.</li>
-              <li><strong>External Validation:</strong> Testing model generalization on datasets from different
-                hospitals and
-                patient populations.</li>
+            <h3 class="subsection-title">Key Findings</h3>
+            <ul class="data-list">
+              <li><strong>Spatial Dependencies Matter:</strong> Incorporating power grid topology through graph
+                structure significantly improves prediction accuracy compared to models that treat counties
+                independently.</li>
+              <li><strong>Multi-Modal Data Integration:</strong> Combining ERA5 climate data, EAGLE-I outage history,
+                and NWS weather alerts provides a comprehensive feature set that captures diverse aspects of outage
+                risk.</li>
+              <li><strong>12-Hour Lead Time:</strong> GraPO successfully predicts outages 12 hours in advance,
+                providing sufficient time for utility companies and emergency responders to prepare.</li>
+              <li><strong>County-Level Granularity:</strong> Moving from state-level to county-level predictions
+                enables more targeted and effective resource allocation.</li>
             </ul>
 
+
           </div>
         </div>
       </div>
     </div>
   </section>
-  <!-- End Related Links -->
 
-  <!-- Acknowledgments Section -->
-  <section class="section hero is-light">
-    <div class="container is-max-desktop">
+
+  <footer class="footer">
+    <div class="container">
       <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3">Acknowledgments</h2>
-          <div class="content has-text-justified">
+        <div class="column is-8">
+          <div class="content has-text-centered">
             <p>
-              This project was completed as part of the Data Mining course at Georgia State University.
-              We thank our instructors and peers for their valuable feedback and support throughout this work.
-              The dataset used in this study is publicly available from the UCI Machine Learning Repository.
+
+            </p>
+            <p style="font-size: 0.9rem; margin-top: 1rem;">
+
+              © 2025 Adele Chinda
+            </p>
+            <p style="font-size: 0.9rem; margin-top: 1rem;">
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template"
+                target="_blank">Academic Project Page Template</a> which was adopted from the <a
+                href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
             </p>
           </div>
         </div>
       </div>
     </div>
-  </section>
-  <!-- End Acknowledgments -->
+  </footer>
 
-  <!-- Image carousel -->
-  <!-- <section class="hero is-small">
-    <div class="hero-body">
-      <div class="container">
-        <div id="results-carousel" class="carousel results-carousel">
-          <div class="item"> -->
-  <!-- Your image here -->
-  <!-- <img src="static/images/carousel1.jpg" alt="MY ALT TEXT" />
-            <h2 class="subtitle has-text-centered">
-              First image description.
-            </h2>
-          </div>
-          <div class="item"> -->
-  <!-- Your image here -->
-  <!-- <img src="static/images/carousel2.jpg" alt="MY ALT TEXT" />
-            <h2 class="subtitle has-text-centered">
-              Second image description.
-            </h2>
-          </div>
-          <div class="item"> -->
-  <!-- Your image here -->
-  <!-- <img src="static/images/carousel3.jpg" alt="MY ALT TEXT" />
-            <h2 class="subtitle has-text-centered">
-              Third image description.
-            </h2>
-          </div>
-          <div class="item"> -->
-  <!-- Your image here -->
-  <!-- <img src="static/images/carousel4.jpg" alt="MY ALT TEXT" />
-            <h2 class="subtitle has-text-centered">
-              Fourth image description.
-            </h2>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section> -->
-  <!-- End image carousel -->
+</body>
+
+</html>
 
 
-
-
-  <!-- Youtube video -->
-  <!-- <section class="hero is-small is-light">
+<!-- Youtube video -->
+<!-- <section class="hero is-small is-light">
     <div class="hero-body">
       <div class="container"> -->
-  <!-- Paper video. -->
-  <!-- <h2 class="title is-3">Video Presentation</h2>
+<!-- Paper video. -->
+<!-- <h2 class="title is-3">Video Presentation</h2>
         <div class="columns is-centered has-text-centered">
           <div class="column is-four-fifths">
 
             <div class="publication-video"> -->
-  <!-- Youtube embed code here -->
-  <!-- <iframe src="https://www.youtube.com/embed/JkaxUblCGz0" frameborder="0" allow="autoplay; encrypted-media"
+<!-- Youtube embed code here -->
+<!-- <iframe src="https://www.youtube.com/embed/JkaxUblCGz0" frameborder="0" allow="autoplay; encrypted-media"
                 allowfullscreen></iframe>
             </div>
           </div>
@@ -714,46 +669,46 @@
       </div>
     </div>
   </section> -->
-  <!-- End youtube video -->
+<!-- End youtube video -->
 
 
-  <!-- Video carousel -->
-  <!-- <section class="hero is-small">
+<!-- Video carousel -->
+<!-- <section class="hero is-small">
     <div class="hero-body">
       <div class="container">
         <h2 class="title is-3">Another Carousel</h2>
         <div id="results-carousel" class="carousel results-carousel">
           <div class="item item-video1">
             <video poster="" id="video1" autoplay controls muted loop height="100%"> -->
-  <!-- Your video file here -->
-  <!-- <source src="static/videos/carousel1.mp4" type="video/mp4">
+<!-- Your video file here -->
+<!-- <source src="static/videos/carousel1.mp4" type="video/mp4">
             </video>
           </div>
           <div class="item item-video2">
             <video poster="" id="video2" autoplay controls muted loop height="100%"> -->
-  <!-- Your video file here -->
-  <!-- <source src="static/videos/carousel2.mp4" type="video/mp4">
+<!-- Your video file here -->
+<!-- <source src="static/videos/carousel2.mp4" type="video/mp4">
             </video>
           </div>
           <div class="item item-video3">
             <video poster="" id="video3" autoplay controls muted loop height="100%">\ -->
-  <!-- Your video file here -->
-  <!-- <source src="static/videos/carousel3.mp4" type="video/mp4">
+<!-- Your video file here -->
+<!-- <source src="static/videos/carousel3.mp4" type="video/mp4">
             </video>
           </div>
         </div>
       </div>
     </div>
   </section> -->
-  <!-- End video carousel -->
+<!-- End video carousel -->
 
 
 
 
 
 
-  <!-- Paper poster -->
-  <!-- <section class="hero is-small is-light">
+<!-- Paper poster -->
+<!-- <section class="hero is-small is-light">
     <div class="hero-body">
       <div class="container">
         <h2 class="title">Poster</h2>
@@ -764,42 +719,26 @@
       </div>
     </div>
   </section> -->
-  <!--End paper poster -->
+<!--End paper poster -->
 
 
-  <!--BibTex citation -->
-  <!-- <section class="section" id="BibTeX">
+<!--BibTex citation -->
+<!-- <section class="section" id="BibTeX">
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX</h2>
       <pre><code>BibTex Code Here</code></pre>
     </div>
   </section> -->
-  <!--End BibTex citation -->
+<!--End BibTex citation -->
 
 
-  <footer class="footer">
-    <div class="container">
-      <div class="columns is-centered">
-        <div class="column is-8">
-          <div class="content">
 
-            <p>
-              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template"
-                target="_blank">Academic Project Page Template</a> which was adopted from the <a
-                href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
-            </p>
 
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
+<!-- Statcounter tracking code -->
 
-  <!-- Statcounter tracking code -->
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
 
-  <!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
-
-  <!-- End of Statcounter Code -->
+<!-- End of Statcounter Code -->
 
 </body>
 
