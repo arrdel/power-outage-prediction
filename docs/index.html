@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <!-- Meta tags for social media banners -->
+  <meta name="description"
+    content="Predicting Hospital Readmission Risk from Electronic Health Records: A Comparative Study of Classical and Ensemble Models. A comprehensive analysis using Logistic Regression, MLP, and XGBoost on the Diabetes 130-US Hospitals dataset.">
+  <meta property="og:title" content="Hospital Readmission Prediction - GSU Data Mining Project" />
+  <meta property="og:description"
+    content="A comparative study of machine learning models for predicting 30-day hospital readmissions using EHR data." />
+  <meta property="og:url" content="https://github.com/arrdel/pat  <footer class=" footer">
+
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
+  <meta property="og:image" content="static/images/teaser.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="twitter:title" content="Hospital Readmission Prediction - GSU Data Mining Project">
+  <meta name="twitter:description"
+    content="A comparative study of machine learning models for predicting 30-day hospital readmissions using EHR data.">
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
+  <meta name="twitter:image" content="static/images/teaser.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Keywords for your paper to be indexed by-->
+  <meta name="keywords"
+    content="hospital readmission, machine learning, XGBoost, logistic regression, MLP, healthcare analytics, EHR, SMOTE, predictive modeling, data mining">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <title>Hospital Readmission Prediction | GSU Data Mining Project</title>
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+
+  <!-- MathJax for rendering LaTeX equations -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Custom styles for enhanced presentation -->
+  <style>
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Enhanced figure styling */
+    figure.image {
+      transition: transform 0.3s ease;
+    }
+
+    figure.image:hover {
+      transform: scale(1.02);
+    }
+
+    /* Better code styling */
+    code {
+      background-color: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Enhanced table styling */
+    .table th {
+      font-weight: 600;
+    }
+
+    /* Section spacing */
+    section.section {
+      padding: 3rem 1.5rem;
+    }
+
+    /* Link styling */
+    .content a {
+      color: #3273dc;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-bottom 0.2s ease;
+    }
+
+    .content a:hover {
+      border-bottom: 1px solid #3273dc;
+    }
+
+    /* Improved list styling */
+    .content ul {
+      line-height: 1.8;
+    }
+
+    /* Better section headers */
+    .title.is-3,
+    .title.is-4 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">GraPO - Predicting Power Outages During Extreme Weather Events
+              Using Graph-Based Method</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- Paper authors -->
+              <span class="author-block">
+                <a href="https://github.com/tanvirhossain" target="_blank">Adele Chinda,</a></span>
+              <span class="author-block">
+                <a href="https://github.com/hrchai" target="_blank">Huirong Chai, </a></span>
+              <span class="author-block">
+                <a href="https://github.com/jamorr" target="_blank">Jack Morris, </a></span>
+              <span class="author-block">
+                <a href="https://github.com/jfassett1" target="_blank">Jayden Fassett </a></span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">Georgia State University<br></span>
+              <!-- <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span> -->
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <!-- Arxiv PDF link -->
+                <span class="link-block">
+                  <a href="https://github.com/arrdel/patient-readmission-prediction/blob/master/report/submission.pdf"
+                    target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                    </span>
+                    <span>Report</span>
+                  </a>
+                </span>
+
+                <!-- Supplementary PDF link
+                <span class="link-block">
+                  <a href="static/pdfs/supplementary_material.pdf" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                    </span>
+                    <span>Supplementary</span>
+                  </a>
+                </span> -->
+
+                <!-- Github link -->
+                <span class="link-block">
+                  <a href="https://github.com/arrdel/patient-readmission-prediction" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Code</span>
+                  </a>
+                </span>
+
+                <!-- ArXiv abstract Link -->
+                <!-- <span class="link-block">
+                  <a href="https://arxiv.org/abs/<ARXIV PAPER ID>" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                    </span>
+                    <span>arXiv</span>
+                  </a>
+                </span> -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Teaser video (commented out)
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <video poster="" id="tree" autoplay controls muted loop height="100%">
+          Your video here
+          <source src="static/videos/banner_video.mp4" type="video/mp4">
+        </video>
+        <h2 class="subtitle has-text-centered">
+          Aliquam vitae elit ullamcorper tellus egestas pellentesque. Ut lacus tellus, maximus vel lectus at, placerat
+          pretium mi. Maecenas dignissim tincidunt vestibulum. Sed consequat hendrerit nisl ut maximus.
+        </h2>
+      </div>
+    </div>
+  </section>
+  End teaser video -->
+
+  <!-- Teaser image-->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <img src="static/images/teaser.png" alt="Hospital Readmission Prediction Project Overview"
+          style="width:100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+        <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
+          A comprehensive machine learning pipeline for predicting 30-day hospital readmissions using the Diabetes
+          130-US Hospitals dataset.
+        </h2>
+      </div>
+    </div>
+  </section>
+  <!-- End teaser image -->
+
+  <!-- Paper abstract -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              We present a complete, reproducible pipeline and empirical study for predicting hospital readmission
+              within 30 days
+              using the Diabetes 130-US Hospitals dataset. Our work
+              focuses on practical preprocessing, robust imbalance handling, and a direct comparison of interpretable
+              models (logistic
+              regression), parametric neural models (multilayer perceptrons, MLP), and tree-ensemble approaches
+              (XGBoost). The pipeline includes end-to-end engineering steps
+              such as feature
+              cleaning, encoding, scaling, oversampling via SMOTE, and feature selection using
+              gradient-boosted
+              gain scores. We evaluate models extensively through ROC and PR curves, loss curves, feature importance
+              analyses,
+              confusion matrices, and threshold tuning. We report empirical performance, highlight trade-offs between
+              interpretability
+              and predictive power, and discuss next steps involving temporal modeling,
+              calibration, and causal evaluation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End paper abstract -->
+
+  <!-- Related Links -->
+  <section class="section hero">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Introduction</h2>
+
+          <div class="content has-text-justified">
+            <p>
+              Hospital readmission prediction is a longstanding operational and clinical challenge. Identifying patients
+              at elevated
+              risk allows clinicians to intervene and potentially reduce both unnecessary hospitalizations and
+              associated healthcare
+              costs. Electronic Health Records (EHRs) provide a rich but heterogeneous representation of patients’
+              clinical histories,
+              encompassing demographics, admission metadata, procedures, medications, and laboratory results. However,
+              prediction from
+              EHR data is complicated by missing values, noisy and high-cardinality diagnosis codes, and substantial
+              class imbalance
+              in short-term readmission events.
+
+              In this study, we develop a reproducible pipeline for predicting 30-day hospital readmissions. We evaluate
+              three
+              modeling paradigms: logistic regression as a linear baseline, a feedforward neural network (MLP)
+              representing nonlinear
+              parametric methods, and gradient-boosted trees (XGBoost) as a strong ensemble learner for
+              structured data. Our contributions are: (i) a fully engineered preprocessing pipeline tailored
+              for EHRs, (ii) a comparative experimental evaluation of classical and ensemble models, and (iii) a
+              discussion of
+              interpretability, operational trade-offs, and future directions.
+
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+  <section class="section hero">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Methods</h2>
+
+          <div class="content has-text-justified">
+            <p>
+              We compare three supervised learning paradigms that represent distinct modeling philosophies: (i)
+              <em>logistic regression</em> as a linear and interpretable baseline, (ii) <em>multilayer perceptron
+                (MLP)</em> as a flexible
+              parametric neural network, and (iii) <em>XGBoost</em>, a non-parametric ensemble tree-boosting approach.
+              This
+              combination allows us to explore the trade-offs between interpretability, nonlinearity, and predictive
+              performance in the
+              context of healthcare readmission prediction.
+            </p>
+
+            <h3 class="title is-4">Logistic Regression</h3>
+            <p>
+              Logistic regression (LogReg) is a generalized linear model that maps input features to a probability of
+              readmission through a logit link function. It estimates the conditional probability of the positive class
+              as:
+            </p>
+            <p>
+              $$P(Y=1 \mid x) = \sigma(w^\top x + b),$$
+            </p>
+            <p>
+              where \(\sigma(z) = \frac{1}{1+e^{-z}}\) is the sigmoid activation, \(w\) denotes the coefficient vector,
+              and
+              \(b\) is the intercept.
+            </p>
+            <p>
+              The model is trained by minimizing the regularized binary cross-entropy loss:
+            </p>
+            <p>
+              $$\mathcal{L}_{\text{logreg}} = - \frac{1}{N}\sum_{i=1}^N \left[ y_i \log \hat{y}_i +
+              (1-y_i)\log(1-\hat{y}_i)\right] + \lambda \|w\|_2^2,$$
+            </p>
+            <p>
+              where \(\lambda\) controls the strength of L2 regularization to prevent overfitting.
+            </p>
+            <p>
+              Logistic regression was chosen as a baseline due to its transparency: coefficients \(w_j\) can be directly
+              interpreted as log-odds ratios, providing clinicians with an intuitive explanation of how individual risk
+              factors
+              contribute to readmission probability.
+            </p>
+
+            <h3 class="title is-4">Multilayer Perceptron</h3>
+            <p>
+              To capture nonlinear dependencies that linear models cannot, we implemented a feedforward multilayer
+              perceptron (MLP). The MLP applies successive affine transformations followed by nonlinear activations:
+            </p>
+            <p>
+              $$h_1 = \text{ReLU}(W_1x+b_1), \quad h_2 = \text{ReLU}(W_2h_1+b_2), \quad \hat{y} = \sigma(W_3h_2+b_3).$$
+            </p>
+            <p>
+              Here, \(h_1\) and \(h_2\) are hidden representations, \(\text{ReLU}(z) = \max(0,z)\) is the activation
+              function, and
+              the final output is squashed into \([0,1]\) using the sigmoid.
+            </p>
+            <p>
+              We employed two hidden layers of size 64 and 32, balancing model expressivity with computational
+              tractability. Training was performed using stochastic gradient descent with backpropagation and early
+              stopping, to avoid
+              overfitting in the presence of limited minority-class data. Unlike LogReg, MLPs are less interpretable,
+              but they allow
+              complex interactions between heterogeneous EHR features (e.g., nonlinear effects of age, comorbidity, and
+              prior visits) to be
+              modeled effectively.
+            </p>
+
+            <h3 class="title is-4">XGBoost</h3>
+            <p>
+              XGBoost is a scalable and regularized gradient boosting algorithm for decision trees. It
+              constructs an additive model:
+            </p>
+            <p>
+              $$\hat{y}_i = \sum_{k=1}^K f_k(x_i), \quad f_k \in \mathcal{F},$$
+            </p>
+            <p>
+              where \(\mathcal{F}\) is the space of regression trees, and \(K\) is the number of boosting rounds. Each
+              tree
+              \(f_k\) is trained to minimize the following regularized objective:
+            </p>
+            <p>
+              $$\mathcal{L} = \sum_{i=1}^N l(y_i, \hat{y}_i) + \sum_{k=1}^K \Omega(f_k),$$
+            </p>
+            <p>
+              with \(\Omega(f) = \gamma T + \tfrac{1}{2}\lambda \|w\|^2\) penalizing tree complexity through the number
+              of
+              leaves \(T\) and leaf weights \(w\).
+            </p>
+            <p>
+              By sequentially fitting trees to the residuals of previous models, XGBoost effectively captures nonlinear
+              feature interactions and hierarchical effects common in structured healthcare data. It also includes
+              built-in
+              handling of missing values and a class-weighting mechanism, making it well suited to clinical prediction
+              tasks with
+              imbalanced data.
+            </p>
+
+            <h3 class="title is-4">Imbalance Handling</h3>
+            <p>
+              The dataset exhibits severe imbalance: only about 11% of admissions correspond to a 30-day readmission
+              event. To address this, we employed the Synthetic Minority Over-sampling Technique (SMOTE), which
+              generates
+              synthetic minority-class samples via convex combinations of existing instances. For two minority samples
+              \(x_i\) and \(x_j\), a new synthetic point is created as:
+            </p>
+            <p>
+              $$x_{\text{new}} = x_i + \alpha (x_j - x_i), \quad \alpha \sim U(0,1).$$
+            </p>
+            <p>
+              This balances the training set, allowing classifiers to learn more robust decision boundaries. In
+              addition, for XGBoost we set the <code>scale_pos_weight</code> hyperparameter to:
+            </p>
+            <p>
+              $$\text{scale_pos_weight} = \frac{\#\{Y=0\}}{\#\{Y=1\}},$$
+            </p>
+            <p>
+              ensuring the loss function penalizes false negatives more heavily, thus improving sensitivity to
+              readmission cases.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+  <section class="section hero">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Results</h2>
+
+          <div class="content has-text-justified">
+            <p>
+              The figure below shows ROC curves comparing Logistic Regression, Multilayer Perceptron (MLP), and
+              XGBoost on the held-out test set. Consistent with expectations for tabular EHR data, XGBoost achieved the
+              strongest
+              overall discriminative ability, yielding the highest ROC AUC (0.62) and PR AUC (0.42).
+            </p>
+
+            <!-- ROC Curve Figure -->
+            <figure class="image" style="margin: 2rem auto; max-width: 550px;">
+              <img src="static/images/models_comparison_roc.png" alt="ROC curves comparing models"
+                style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); image-rendering: crisp-edges;">
+              <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
+                <strong>Figure 1:</strong> ROC curves comparing Logistic Regression, MLP, and XGBoost on the test set.
+                XGBoost achieves the strongest discriminative performance (highest AUC).
+              </figcaption>
+            </figure>
+
+            <p>
+              The table below summarizes the primary evaluation metrics. Logistic Regression and MLP both
+              reached the highest F1 score (0.93), but their performance profiles differ: Logistic Regression favors
+              higher precision (0.89)
+              at slightly lower recall (0.97), whereas MLP achieves stronger recall (0.98) but without additional gain
+              in precision.
+              XGBoost, while superior in ROC/PR AUC, demonstrates a sharp trade-off, excelling in precision (0.93) but
+              with a
+              notably lower recall (0.40), leading to a reduced F1 score (0.56).
+            </p>
+            <p>
+              These differences highlight that model choice depends not only on discriminative metrics such as AUC, but
+              also on operational trade-offs between sensitivity and specificity in deployment contexts.
+            </p>
+
+            <!-- Results Table -->
+            <div style="overflow-x: auto; margin: 2rem 0;">
+              <table class="table is-bordered is-striped is-hoverable is-fullwidth"
+                style="margin: 0 auto; max-width: 800px;">
+                <caption
+                  style="caption-side: top; text-align: center; font-weight: bold; margin-bottom: 1rem; font-size: 1.1rem;">
+                  <strong>Table 1:</strong> Primary evaluation metrics on the 30-day readmission task.
+                </caption>
+                <thead style="background-color: #f5f5f5;">
+                  <tr>
+                    <th style="text-align: left;">Model</th>
+                    <th style="text-align: center;">ROC AUC</th>
+                    <th style="text-align: center;">PR AUC</th>
+                    <th style="text-align: center;">Precision</th>
+                    <th style="text-align: center;">Recall</th>
+                    <th style="text-align: center;">F1</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align: left;"><strong>Logistic Regression</strong></td>
+                    <td style="text-align: center;">0.56</td>
+                    <td style="text-align: center;">0.35</td>
+                    <td style="text-align: center;">0.89</td>
+                    <td style="text-align: center;">0.97</td>
+                    <td style="text-align: center;"><strong>0.93</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: left;"><strong>MLP</strong></td>
+                    <td style="text-align: center;">0.59</td>
+                    <td style="text-align: center;">0.38</td>
+                    <td style="text-align: center;">0.89</td>
+                    <td style="text-align: center;"><strong>0.98</strong></td>
+                    <td style="text-align: center;"><strong>0.93</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: left;"><strong>XGBoost</strong></td>
+                    <td style="text-align: center;"><strong>0.62</strong></td>
+                    <td style="text-align: center;"><strong>0.42</strong></td>
+                    <td style="text-align: center;"><strong>0.93</strong></td>
+                    <td style="text-align: center;">0.40</td>
+                    <td style="text-align: center;">0.56</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Classification Reports -->
+            <h3 class="title is-4">Classification Reports</h3>
+            <p>The following figures show detailed classification reports for each model:</p>
+
+            <div class="columns is-multiline" style="margin-top: 2rem;">
+              <div class="column is-half">
+                <figure class="image">
+                  <img src="static/images/logistic_regression_classification_report.png"
+                    alt="Logistic Regression Classification Report"
+                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
+                    <strong>Figure 2:</strong> Classification report for Logistic Regression.
+                  </figcaption>
+                </figure>
+              </div>
+              <div class="column is-half">
+                <figure class="image">
+                  <img src="static/images/mlp_classifier_classification_report.png" alt="MLP Classification Report"
+                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
+                    <strong>Figure 3:</strong> Classification report for MLP.
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <div class="columns is-centered" style="margin-top: 1rem;">
+              <div class="column is-half">
+                <figure class="image">
+                  <img src="static/images/xgboost_classification_report.png" alt="XGBoost Classification Report"
+                    style="width: 100%; height: auto; image-rendering: crisp-edges;">
+                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
+                    <strong>Figure 4:</strong> Classification report for XGBoost.
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <!-- Additional Analysis -->
+            <h3 class="title is-4" style="margin-top: 3rem;">Model Interpretation and Feature Importance</h3>
+            <p>
+              Beyond predictive performance, understanding which features drive readmission risk is crucial for clinical
+              decision-making. The figure below shows the top 30 most influential features from the logistic regression
+              model,
+              ranked by their coefficient magnitudes. These coefficients represent the log-odds contribution of each
+              feature
+              to the readmission probability.
+            </p>
+
+            <div class="columns is-centered" style="margin-top: 2rem; margin-bottom: 3rem;">
+              <div class="column is-three-quarters">
+                <figure class="image">
+                  <img src="static/images/logreg_top30_coefficients.png" alt="Top 30 Logistic Regression Coefficients"
+                    style="width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <figcaption style="text-align: center; margin-top: 0.5rem; font-style: italic;">
+                    <strong>Figure 5:</strong> Top 30 feature coefficients from logistic regression, showing the most
+                    influential
+                    predictors of hospital readmission. Positive coefficients indicate increased readmission risk.
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <!-- Discussion Section -->
+            <h3 class="title is-4">Discussion</h3>
+            <p>
+              Our comparative analysis reveals important trade-offs in model selection for hospital readmission
+              prediction.
+              While XGBoost achieves superior discriminative performance (ROC AUC: 0.62), logistic regression and MLP
+              models
+              provide better balance between precision and recall (F1: 0.93). The choice of model should align with
+              deployment
+              priorities: if the goal is to identify high-risk patients for targeted interventions, XGBoost's higher
+              precision
+              may be preferable despite lower recall. Conversely, if the objective is to ensure no at-risk patients are
+              missed,
+              the higher recall of MLP models may be more appropriate.
+            </p>
+            <p>
+              The SMOTE oversampling technique proved effective in addressing class imbalance, though future work could
+              explore
+              alternative approaches such as cost-sensitive learning or focal loss. Feature engineering and selection
+              significantly
+              impacted model performance, suggesting that domain expertise in identifying clinically relevant predictors
+              is as
+              important as algorithm choice.
+            </p>
+
+            <!-- Future Work -->
+            <h3 class="title is-4">Future Directions</h3>
+            <p>
+              Several promising directions for future research include:
+            </p>
+            <ul style="margin-left: 2rem;">
+              <li><strong>Temporal Modeling:</strong> Incorporating time-series patterns and sequential patient
+                histories using
+                recurrent neural networks (RNNs) or transformers.</li>
+              <li><strong>Model Calibration:</strong> Ensuring predicted probabilities accurately reflect true
+                readmission risks
+                through calibration techniques like Platt scaling or isotonic regression.</li>
+              <li><strong>Causal Inference:</strong> Moving beyond correlation to identify causal relationships using
+                propensity
+                score matching or instrumental variables.</li>
+              <li><strong>Deployment Considerations:</strong> Addressing fairness across demographic groups, model
+                interpretability
+                for clinical staff, and integration with existing EHR systems.</li>
+              <li><strong>External Validation:</strong> Testing model generalization on datasets from different
+                hospitals and
+                patient populations.</li>
+            </ul>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End Related Links -->
+
+  <!-- Acknowledgments Section -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Acknowledgments</h2>
+          <div class="content has-text-justified">
+            <p>
+              This project was completed as part of the Data Mining course at Georgia State University.
+              We thank our instructors and peers for their valuable feedback and support throughout this work.
+              The dataset used in this study is publicly available from the UCI Machine Learning Repository.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End Acknowledgments -->
+
+  <!-- Image carousel -->
+  <!-- <section class="hero is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div id="results-carousel" class="carousel results-carousel">
+          <div class="item"> -->
+  <!-- Your image here -->
+  <!-- <img src="static/images/carousel1.jpg" alt="MY ALT TEXT" />
+            <h2 class="subtitle has-text-centered">
+              First image description.
+            </h2>
+          </div>
+          <div class="item"> -->
+  <!-- Your image here -->
+  <!-- <img src="static/images/carousel2.jpg" alt="MY ALT TEXT" />
+            <h2 class="subtitle has-text-centered">
+              Second image description.
+            </h2>
+          </div>
+          <div class="item"> -->
+  <!-- Your image here -->
+  <!-- <img src="static/images/carousel3.jpg" alt="MY ALT TEXT" />
+            <h2 class="subtitle has-text-centered">
+              Third image description.
+            </h2>
+          </div>
+          <div class="item"> -->
+  <!-- Your image here -->
+  <!-- <img src="static/images/carousel4.jpg" alt="MY ALT TEXT" />
+            <h2 class="subtitle has-text-centered">
+              Fourth image description.
+            </h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section> -->
+  <!-- End image carousel -->
+
+
+
+
+  <!-- Youtube video -->
+  <!-- <section class="hero is-small is-light">
+    <div class="hero-body">
+      <div class="container"> -->
+  <!-- Paper video. -->
+  <!-- <h2 class="title is-3">Video Presentation</h2>
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+
+            <div class="publication-video"> -->
+  <!-- Youtube embed code here -->
+  <!-- <iframe src="https://www.youtube.com/embed/JkaxUblCGz0" frameborder="0" allow="autoplay; encrypted-media"
+                allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section> -->
+  <!-- End youtube video -->
+
+
+  <!-- Video carousel -->
+  <!-- <section class="hero is-small">
+    <div class="hero-body">
+      <div class="container">
+        <h2 class="title is-3">Another Carousel</h2>
+        <div id="results-carousel" class="carousel results-carousel">
+          <div class="item item-video1">
+            <video poster="" id="video1" autoplay controls muted loop height="100%"> -->
+  <!-- Your video file here -->
+  <!-- <source src="static/videos/carousel1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item item-video2">
+            <video poster="" id="video2" autoplay controls muted loop height="100%"> -->
+  <!-- Your video file here -->
+  <!-- <source src="static/videos/carousel2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item item-video3">
+            <video poster="" id="video3" autoplay controls muted loop height="100%">\ -->
+  <!-- Your video file here -->
+  <!-- <source src="static/videos/carousel3.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section> -->
+  <!-- End video carousel -->
+
+
+
+
+
+
+  <!-- Paper poster -->
+  <!-- <section class="hero is-small is-light">
+    <div class="hero-body">
+      <div class="container">
+        <h2 class="title">Poster</h2>
+
+        <iframe src="static/pdfs/sample.pdf" width="100%" height="550">
+        </iframe>
+
+      </div>
+    </div>
+  </section> -->
+  <!--End paper poster -->
+
+
+  <!--BibTex citation -->
+  <!-- <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>BibTex Code Here</code></pre>
+    </div>
+  </section> -->
+  <!--End BibTex citation -->
+
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template"
+                target="_blank">Academic Project Page Template</a> which was adopted from the <a
+                href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            </p>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Statcounter tracking code -->
+
+  <!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+  <!-- End of Statcounter Code -->
+
+</body>
+
+</html>
